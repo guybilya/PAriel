@@ -72,7 +72,9 @@
         currentUser = { ...data, uid: user.uid };
         currentRole = data.role;
         currentSoldierId = data.soldierId || null;
-        dbg('נכנס בהצלחה! עובר למערכת...');
+        // Set correct starting page BEFORE showApp
+        activePage = (currentRole === 'soldier') ? 'my_gear' : 'warehouse_a';
+        dbg('נכנס בהצלחה! עובר למערכת... role=' + currentRole);
         showApp();
         loadCurrentPage();
       } else {
@@ -183,8 +185,7 @@
       const el = document.getElementById(id);
       if (el && currentRole === 'rasp') el.classList.remove('hidden');
     });
-    if (currentRole === 'soldier') activePage = 'my_gear';
-    else activePage = 'warehouse_a';
+    // activePage already set in auth handler
     updateNav();
   }
   function showLogin() {
@@ -228,6 +229,10 @@
     if (currentRole === 'soldier') {
       switch(activePage) {
         case 'my_gear': renderMyGear(); return;
+        case 'warehouse_a': case 'warehouse_b': case 'warehouse_donations':
+        case 'register': case 'history': case 'soldiers': case 'requests': case 'armory':
+          // soldier trying to access rasp pages - redirect
+          activePage = 'my_gear'; updateNav(); renderMyGear(); return;
         case 'my_history': renderMyHistory(); return;
         case 'my_requests': renderMyRequests(); return;
         default: renderMyGear(); return;
