@@ -181,7 +181,22 @@
     const as = document.getElementById('appShell');
     if (ls) { ls.style.display = 'none'; ls.style.visibility = 'hidden'; ls.setAttribute('hidden', ''); }
     if (as) { as.removeAttribute('hidden'); as.style.visibility = 'visible'; as.style.display = 'flex'; }
-    document.getElementById('hudUser').textContent = 'מזהה: ' + (currentUser?.name || '');
+    try { document.getElementById('hudUser').textContent = ''; } catch(e) {}
+    // Date
+    (function() {
+      const now = new Date();
+      const days = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
+      const monthsHe = ['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
+      const he = 'יום ' + days[now.getDay()] + ' ' + now.getDate() + ' ' + monthsHe[now.getMonth()] + ' ' + now.getFullYear();
+      const lat = now.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+      const hed = document.getElementById('headerDateHe');
+      const latd = document.getElementById('headerDateLat');
+      if (hed) hed.textContent = he;
+      if (latd) latd.textContent = lat;
+    })();
+    // Update sidebar profile
+    const spn = document.getElementById('sideProfileName');
+    if (spn) spn.textContent = currentUser?.name || '';
     // Show reset buttons for rasp
     ['resetBtn','resetBtnSide'].forEach(id => {
       const el = document.getElementById(id);
@@ -227,13 +242,11 @@
     const soldierNav = document.getElementById('soldierNav');
     if (raspNav && soldierNav) {
       if (isSoldier) {
-        raspNav.classList.add('hidden');
-        soldierNav.classList.remove('hidden');
+        raspNav.style.display = 'none';
         soldierNav.style.display = 'flex';
       } else {
-        raspNav.classList.remove('hidden');
         raspNav.style.display = 'flex';
-        soldierNav.classList.add('hidden');
+        soldierNav.style.display = 'none';
       }
     }
   }
@@ -773,7 +786,7 @@
           </div>
           <div>
             <p class="font-body font-bold">${op.itemName}</p>
-            <p class="font-label text-[10px] text-on-surface-variant uppercase">${op.soldier||op.by} | ${op.time} | ${op.cond||''}</p>
+            <p class="font-label text-[10px] text-on-surface-variant uppercase">${op.time} | ${op.soldier||op.by}${op.cond ? ' | ' + op.cond : ''}</p>
           </div>
         </div>
         <span class="font-label text-[10px] px-2 py-1 bg-${typeColor[op.type]||'secondary'}/10 text-${typeColor[op.type]||'secondary'} border border-${typeColor[op.type]||'secondary'}/20 rounded-sm">${op.type}</span>
@@ -945,7 +958,7 @@
             </div>
             <div>
               <h3 class="font-medium text-sm text-on-surface">${op.itemName}</h3>
-              <p class="font-label text-[10px] text-on-surface-variant mt-0.5">${soldierLabel ? soldierLabel.replace(' | ','') : ''} | ${op.cond||''} | ${op.time}</p>
+              <p class="font-label text-[10px] text-on-surface-variant mt-0.5">${op.time}${soldierLabel ? ' | ' + soldierLabel.replace(' | ','').trim() : ''}${op.cond ? ' | ' + op.cond : ''}</p>
             </div>
           </div>
           <span class="font-label text-[10px] px-2 py-1 bg-${color}/10 text-${color} border border-${color}/20 rounded-sm shrink-0">${op.type}</span>
@@ -1503,14 +1516,23 @@
         });
       }
 
-      const statusBadge = (s) => {
-        if (s === 'תקין') return `<span class="bg-primary/10 text-primary px-2 py-1 text-[10px] font-bold rounded-sm border border-primary/20">תקין</span>`;
-        if (s === 'קריטי') return `<span class="bg-error/10 text-error px-2 py-1 text-[10px] font-bold rounded-sm border border-error/20">קריטי</span>`;
+      const condBadge = (cond) => {
+        if (!cond || cond === 'תקין') return `<span class="bg-primary/10 text-primary px-2 py-1 text-[10px] font-bold rounded-sm border border-primary/20">תקין</span>`;
         return `<span class="bg-tertiary/10 text-tertiary px-2 py-1 text-[10px] font-bold rounded-sm border border-tertiary/20">בלאי</span>`;
       };
 
+      // Build issue condition map from activity
+      const issueConds = {};
+      if (actSnap.exists()) {
+        Object.values(actSnap.val()).forEach(a => {
+          if (a.type === 'ניפוק' && a.soldier === soldier.name && a.sku && !issueConds[a.sku]) {
+            issueConds[a.sku] = a.cond || 'תקין';
+          }
+        });
+      }
+
       tbody.innerHTML = items.map(sku => {
-        const item = allItems[sku] || { name: sku, status: 'לא ידוע' };
+        const item = allItems[sku] || { name: sku };
         return `<tr class="hover:bg-white/5 transition-colors">
           <td class="px-4 py-3">
             <div class="w-10 h-10 bg-surface-container-lowest rounded-sm flex items-center justify-center border border-outline-variant/10 overflow-hidden">
@@ -1519,7 +1541,7 @@
           </td>
           <td class="px-4 py-3 font-mono text-xs text-primary">#${sku}</td>
           <td class="px-4 py-3 font-medium text-sm">${item.name}</td>
-          <td class="px-4 py-3">${statusBadge(item.status)}</td>
+          <td class="px-4 py-3">${condBadge(issueConds[sku])}</td>
           <td class="px-4 py-3 font-bold">1</td>
           <td class="px-4 py-3 font-label text-xs text-on-surface-variant">${issueDates[sku] || '—'}</td>
         </tr>`;
@@ -1603,7 +1625,7 @@
               </div>
               <div>
                 <h3 class="font-headline font-bold">${a.itemName}</h3>
-                <p class="font-label text-[10px] text-on-surface-variant uppercase mt-1">${a.cond || ''} | ${a.time}</p>
+                <p class="font-label text-[10px] text-on-surface-variant uppercase mt-1">${a.time}${a.cond ? ' | ' + a.cond : ''}</p>
               </div>
             </div>
             <span class="font-label text-[10px] px-3 py-1 bg-${color}/10 text-${color} border border-${color}/20 rounded-sm">${a.type}</span>
@@ -1826,7 +1848,7 @@
       }
     }
     await update(ref(db, 'armory/' + cat + '/' + itemId), { holderId: null, holderName: null });
-    await _logActivity('שחרור', item.name || itemId, itemId, item.holderName || '', cat);
+    await _logActivity('זיכוי', item.name || itemId, itemId, item.holderName || '', ARMORY_CATS[cat]?.label || cat);
     showToast('פריט שוחרר ✓');
     const freshSnap = await get(ref(db, 'armory'));
     if (freshSnap.exists()) {
@@ -1961,7 +1983,7 @@
     if (!solItems.includes(armoryKey)) {
       await update(ref(db, 'soldiers/' + sid), { items: [...solItems, armoryKey] });
     }
-    await _logActivity('שיוך', window._armoryData?.[cat]?.[itemId]?.name || itemId, itemId, s.name, cat);
+    await _logActivity('ניפוק', window._armoryData?.[cat]?.[itemId]?.name || itemId, itemId, s.name, ARMORY_CATS[cat]?.label || cat);
     closeModal();
     showToast('שויך בהצלחה ✓');
     // Refresh
@@ -2007,7 +2029,7 @@
       }
     }
     await update(ref(db, 'armory/' + cat + '/' + itemId), { holderId: null, holderName: null });
-    await _logActivity('שחרור', item.name, itemId, item.holderName, cat);
+    await _logActivity('זיכוי', item.name, itemId, item.holderName, ARMORY_CATS[cat]?.label || cat);
     showToast('שוחרר בהצלחה ✓');
     const freshSnap = await get(ref(db, 'armory'));
     if (freshSnap.exists()) {
@@ -2260,6 +2282,126 @@
     setTimeout(() => location.reload(), 1500);
   };
 
+  // ── PROFILE ───────────────────────────────────────────────────
+  window._openProfile = async function() {
+    const uid = currentUser?.uid;
+    const sid = currentSoldierId;
+    let soldier = null;
+    if (sid) {
+      const snap = await get(ref(db, 'soldiers/' + sid));
+      if (snap.exists()) soldier = snap.val();
+    }
+
+    showModal('הפרופיל שלי', `
+      <div class="space-y-4">
+        <!-- Photo -->
+        <div class="flex items-center gap-4 p-3 bg-surface-container rounded-sm border border-outline-variant/20">
+          <div id="profilePhotoPrev" onclick="document.getElementById('profilePhotoInput').click()"
+            class="w-16 h-16 rounded-full overflow-hidden bg-primary/10 border-2 border-dashed border-primary/30 flex items-center justify-center cursor-pointer hover:border-primary transition-colors shrink-0">
+            ${soldier?.photo
+              ? '<img src="' + soldier.photo + '" class="w-full h-full object-cover" id="profilePhotoImg"/>'
+              : '<span class="material-symbols-outlined text-primary/50 text-2xl">add_photo_alternate</span>'}
+          </div>
+          <input id="profilePhotoInput" type="file" accept="image/*" class="hidden"
+            onchange="window._previewPhoto('profilePhotoInput','profilePhotoPrev')"/>
+          <div>
+            <p class="font-label text-xs text-on-surface-variant uppercase tracking-wider mb-1">תמונת פרופיל</p>
+            <button onclick="document.getElementById('profilePhotoInput').click()" class="text-xs text-primary font-bold hover:underline">החלף תמונה</button>
+          </div>
+        </div>
+        <!-- Name & Phone -->
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="field-lbl">שם מלא</label>
+            <input id="profileName" class="field-inp" type="text" value="${currentUser?.name || ''}"/>
+          </div>
+          <div>
+            <label class="field-lbl">טלפון</label>
+            <input id="profilePhone" class="field-inp" type="text" value="${soldier?.phone || ''}"/>
+          </div>
+          <div>
+            <label class="field-lbl">מספר אישי</label>
+            <input id="profileId" class="field-inp" type="text" value="${soldier?.id || ''}"/>
+          </div>
+        </div>
+        <!-- Email & Password -->
+        <div class="border-t border-outline-variant/20 pt-4 space-y-3">
+          <p class="font-label text-xs text-on-surface-variant uppercase tracking-wider flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-sm">lock</span>פרטי התחברות
+          </p>
+          <div>
+            <label class="field-lbl">אימייל</label>
+            <input id="profileEmail" class="field-inp" type="email" value="${soldier?.email || currentUser?.email || ''}"/>
+          </div>
+          <div>
+            <label class="field-lbl">סיסמה חדשה <span class="text-on-surface-variant font-normal normal-case">(השאר ריק לאי-שינוי)</span></label>
+            <input id="profilePass" class="field-inp" type="password" placeholder="••••••••"/>
+          </div>
+        </div>
+        <p id="profileErr" class="text-xs text-error min-h-[16px]"></p>
+      </div>`,
+      '<button onclick="closeModal()" class="btn-cancel">ביטול</button>' +
+      '<button onclick="window._saveProfile()" class="btn-save">שמור שינויים</button>'
+    );
+  };
+
+  window._saveProfile = async function() {
+    const name = document.getElementById('profileName').value.trim();
+    const phone = document.getElementById('profilePhone').value.trim();
+    const pid = document.getElementById('profileId').value.trim();
+    const email = document.getElementById('profileEmail').value.trim();
+    const pass = document.getElementById('profilePass').value;
+    const errEl = document.getElementById('profileErr');
+    if (!name) { if(errEl) errEl.textContent = 'נא למלא שם'; return; }
+
+    // Photo
+    let photo = null;
+    const pi = document.getElementById('profilePhotoInput');
+    if (pi?.files[0]) {
+      photo = await new Promise(res => {
+        const r = new FileReader(); r.onload = e => res(e.target.result); r.readAsDataURL(pi.files[0]);
+      });
+    }
+
+    try {
+      // Update soldier record
+      if (currentSoldierId) {
+        const upd = { name, phone, id: pid };
+        if (photo) upd.photo = photo;
+        await update(ref(db, 'soldiers/' + currentSoldierId), upd);
+      }
+      // Update user record
+      const userUpd = { name };
+      if (photo) userUpd.photo = photo;
+      await update(ref(db, 'users/' + currentUser.uid), userUpd);
+      currentUser.name = name;
+
+      // Update Auth email/password
+      const { updateEmail, updatePassword, getAuth } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
+      const authUser = getAuth().currentUser;
+      if (email && authUser && email !== authUser.email) {
+        try { await updateEmail(authUser, email); } catch(e) { if(errEl) errEl.textContent = 'שגיאה בעדכון אימייל: ' + e.message; return; }
+        await update(ref(db, 'soldiers/' + currentSoldierId), { email });
+      }
+      if (pass) {
+        try { await updatePassword(authUser, pass); } catch(e) { if(errEl) errEl.textContent = 'שגיאה בעדכון סיסמה: ' + e.message; return; }
+      }
+
+      // Update sidebar display
+      const spn = document.getElementById('sideProfileName');
+      if (spn) spn.textContent = name;
+      if (photo) {
+        const spp = document.getElementById('sideProfilePhoto');
+        if (spp) spp.innerHTML = '<img src="' + photo + '" class="w-full h-full object-cover"/>';
+      }
+
+      closeModal();
+      showToast('פרופיל עודכן ✓');
+    } catch(e) {
+      if(errEl) errEl.textContent = 'שגיאה: ' + e.message;
+    }
+  };
+
   // Init
   seedIfEmpty().catch(console.error);
 </script>
@@ -2360,6 +2502,203 @@ tailwind.config = {
   .field-inp{width:100%;background:white;border:2px solid #e2e8f0;border-radius:8px;padding:9px 12px;color:#1e293b;font-size:14px;font-family:inherit;outline:none;transition:border-color .15s;text-align:right}
   .field-inp:focus{border-color:#059669}
   .field-inp option{background:white}
+
+  /* ═══ GARMIN-STYLE APP SHELL ═══ */
+  body { background: #111318 !important; color: #e0e0e0 !important; }
+
+  /* Header */
+  .app-header {
+    background: #1a1c23;
+    border-bottom: 1px solid #2a2d38;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.4);
+  }
+  .header-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px 6px;
+    direction: rtl;
+  }
+  .header-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    flex: 1;
+  }
+  .header-logo {
+    height: 38px;
+    width: auto;
+    filter: invert(1) brightness(1.2);
+    object-fit: contain;
+  }
+  .header-unit {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: #4fc3f7;
+    text-transform: uppercase;
+  }
+  .header-right, .header-left {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 80px;
+  }
+  .header-left { justify-content: flex-end; }
+  .header-right { justify-content: flex-start; }
+  .header-icon-btn {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.06);
+    border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: #94a3b8;
+    transition: all .15s;
+  }
+  .header-icon-btn:hover { background: rgba(79,195,247,0.15); color: #4fc3f7; }
+  .header-icon-btn.danger { color: #f87171; }
+  .header-icon-btn.danger:hover { background: rgba(248,113,113,0.15); }
+  .header-icon-btn .material-symbols-outlined { font-size: 18px; }
+  .profile-chip {
+    display: flex; align-items: center; gap: 8px;
+    background: rgba(79,195,247,0.08);
+    border: 1px solid rgba(79,195,247,0.2);
+    border-radius: 20px;
+    padding: 4px 10px 4px 6px;
+    cursor: pointer;
+    transition: all .15s;
+    direction: rtl;
+  }
+  .profile-chip:hover { background: rgba(79,195,247,0.15); }
+  .profile-avatar {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    background: rgba(79,195,247,0.15);
+    border: 1px solid rgba(79,195,247,0.3);
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden; shrink: 0;
+  }
+  .profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .profile-name {
+    font-size: 12px; font-weight: 700;
+    color: #e0e0e0;
+    max-width: 70px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .date-strip {
+    display: flex; align-items: center; justify-content: center;
+    gap: 8px;
+    padding: 4px 16px 8px;
+    direction: rtl;
+  }
+  .date-he { font-size: 11px; font-weight: 600; color: #94a3b8; }
+  .date-sep { color: #4fc3f7; font-size: 14px; }
+  .date-lat { font-size: 11px; color: #64748b; }
+
+  /* Bottom Nav */
+  .bottom-nav {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    z-index: 50;
+    background: #1a1c23;
+    border-top: 1px solid #2a2d38;
+    display: flex !important;
+    flex-direction: row-reverse;
+    justify-content: space-around;
+    align-items: center;
+    padding: 6px 4px;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.4);
+  }
+  .bnav-item {
+    display: flex; flex-direction: column;
+    align-items: center; gap: 2px;
+    padding: 6px 8px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all .15s;
+    flex: 1;
+    color: #546070;
+    text-decoration: none;
+    position: relative;
+  }
+  .bnav-item:hover { color: #94a3b8; }
+  .bnav-item.nav-active { color: #4fc3f7 !important; }
+  .bnav-item.nav-active::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 20%; right: 20%;
+    height: 2px;
+    background: #4fc3f7;
+    border-radius: 0 0 2px 2px;
+  }
+  .bnav-icon { font-size: 22px !important; }
+  .bnav-label { font-size: 9px; font-weight: 700; letter-spacing: .03em; }
+
+  /* Override existing nav-link for active state */
+  [data-nav].nav-active .bnav-icon,
+  [data-nav].nav-active .bnav-label { color: #4fc3f7; }
+
+  /* Cards in garmin style */
+  .bg-surface-container,
+  .bg-surface-container-low,
+  .bg-surface-container-lowest,
+  .bg-surface-container-high,
+  .bg-surface-container-highest,
+  .bg-background { background: #1e2130 !important; }
+
+  /* Table rows */
+  tr:hover td { background: rgba(79,195,247,0.04) !important; }
+
+  /* Form drawer */
+  #formDrawer { background: #1a1c23 !important; border-right: 1px solid #2a2d38 !important; }
+  #drawerBody { background: #1a1c23; }
+  #drawerFooter { background: #151720 !important; border-top: 1px solid #2a2d38 !important; }
+
+  /* Modal */
+  #mBx { background: #1a1c23 !important; border: 1px solid #2a2d38 !important; }
+
+  /* Inputs garmin style */
+  .field-inp {
+    background: #111318 !important;
+    border: 1px solid #2a2d38 !important;
+    color: #e0e0e0 !important;
+    border-radius: 8px !important;
+  }
+  .field-inp:focus { border-color: #4fc3f7 !important; box-shadow: 0 0 0 2px rgba(79,195,247,0.15) !important; }
+
+  /* Primary color overrides → cyan */
+  .text-primary { color: #4fc3f7 !important; }
+  .bg-primary { background: #4fc3f7 !important; }
+  .border-primary { border-color: #4fc3f7 !important; }
+  .bg-primary\/10 { background: rgba(79,195,247,0.1) !important; }
+  .bg-primary\/20 { background: rgba(79,195,247,0.2) !important; }
+  .border-primary\/20 { border-color: rgba(79,195,247,0.2) !important; }
+  .border-primary\/30 { border-color: rgba(79,195,247,0.3) !important; }
+  .hover\:text-primary:hover { color: #4fc3f7 !important; }
+  .hover\:bg-primary\/10:hover { background: rgba(79,195,247,0.1) !important; }
+
+  /* Buttons */
+  .btn-save { background: #4fc3f7 !important; color: #0d1117 !important; border-radius: 10px !important; font-weight: 700 !important; }
+  .btn-save:hover { background: #38b2e8 !important; }
+
+  /* Stats border colors */
+  .border-r-2.border-primary { border-color: #4fc3f7 !important; }
+  .border-r-2.border-secondary { border-color: #06b6d4 !important; }
+
+  /* Nav link active */
+  .nav-link.text-primary { color: #4fc3f7 !important; }
+  .nav-link.text-primary::before { background: #4fc3f7 !important; }
+
+  /* Page content alignment - right */
+  #mainContent { direction: rtl; text-align: right; }
+  #mainContent * { direction: rtl; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: #111318; }
+  ::-webkit-scrollbar-thumb { background: #2a2d38; border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: #4fc3f7; }
 </style>
 </head>
 
@@ -2381,6 +2720,175 @@ tailwind.config = {
   <div id="drawerFooter" class="px-5 py-4 border-t border-slate-200 flex gap-3 justify-end shrink-0" style="background:#f8fafc"></div>
 </div>
 <div id="formDrawerBackdrop" onclick="closeModal()" class="fixed inset-0 z-[155] bg-black/20 backdrop-blur-[1px]" style="display:none"></div>
+
+<!-- ═══════════════════════ LOGIN SCREEN ═══════════════════════ -->
+<div id="loginScreen" class="min-h-screen flex flex-col" style="display:flex">
+  <!-- HUD bar -->
+  <div class="w-full bg-surface-container-lowest h-8 flex items-center justify-between px-6 border-b border-outline-variant/10 shrink-0">
+    <div class="flex gap-4">
+      <span class="text-[10px] font-label text-on-surface-variant tracking-widest uppercase">מעמד מערכת: מבצעי</span>
+      <span class="text-[10px] font-label text-on-surface-variant tracking-widest uppercase">הצפנה: AES-256</span>
+    </div>
+    <span class="text-[10px] font-label text-primary tracking-widest uppercase">32.0853° N, 34.7818° E</span>
+  </div>
+  <!-- Main -->
+  <main class="flex-grow flex items-center justify-center px-4 py-12">
+    <div class="w-full max-w-md">
+      <div class="mb-8 text-right">
+        <span class="text-[10px] font-label text-primary uppercase tracking-widest block mb-2">מערכת ניהול מבצעית אחודה</span>
+        <h2 class="text-5xl font-headline font-extrabold tracking-tighter">הזדהות<br/><span class="text-primary">משתמש</span></h2>
+      </div>
+      <div class="bg-surface-container p-8 rounded-sm border-r-2 border-primary shadow-lg space-y-5">
+
+        <!-- Tab toggle -->
+        <div class="flex bg-surface-container-high rounded-sm p-1 gap-1">
+          <button id="loginTabId"
+            style="flex:1;padding:8px;border-radius:4px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;background:var(--tw-color-primary,#059669);color:white;border:none;cursor:pointer;transition:all .2s"
+            onclick="window._setLoginTab('id')">מספר אישי</button>
+          <button id="loginTabEmail"
+            style="flex:1;padding:8px;border-radius:4px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;background:transparent;color:#64748b;border:none;cursor:pointer;transition:all .2s"
+            onclick="window._setLoginTab('email')">אימייל</button>
+        </div>
+
+        <!-- Personal ID row -->
+        <div id="loginIdRow">
+          <label style="display:block;font-size:10px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">מספר אישי</label>
+          <input id="loginPersonalId" type="text" placeholder="הזן מספר אישי"
+            style="width:100%;background:white;border:2px solid #e2e8f0;border-radius:8px;padding:10px 12px;font-size:15px;color:#1e293b;outline:none;text-align:right;transition:border-color .15s"
+            onfocus="this.style.borderColor='#059669'"
+            onblur="this.style.borderColor='#e2e8f0'"
+            onkeydown="if(event.key==='Enter')window._login()"/>
+        </div>
+
+        <!-- Email row (hidden by default) -->
+        <div id="loginEmailRow" style="display:none">
+          <label style="display:block;font-size:10px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">אימייל</label>
+          <input id="loginEmail" type="email" placeholder="your@email.com"
+            style="width:100%;background:white;border:2px solid #e2e8f0;border-radius:8px;padding:10px 12px;font-size:15px;color:#1e293b;outline:none;text-align:right;transition:border-color .15s"
+            onfocus="this.style.borderColor='#059669'"
+            onblur="this.style.borderColor='#e2e8f0'"
+            onkeydown="if(event.key==='Enter')window._login()"/>
+        </div>
+
+        <!-- Password -->
+        <div>
+          <label style="display:block;font-size:10px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">סיסמה</label>
+          <input id="loginPass" type="password" placeholder="••••••••"
+            style="width:100%;background:white;border:2px solid #e2e8f0;border-radius:8px;padding:10px 12px;font-size:15px;color:#1e293b;outline:none;text-align:right;transition:border-color .15s"
+            onfocus="this.style.borderColor='#059669'"
+            onblur="this.style.borderColor='#e2e8f0'"
+            onkeydown="if(event.key==='Enter')window._login()"/>
+        </div>
+
+        <!-- Error -->
+        <p id="loginError" style="min-height:18px;font-size:12px;color:#dc2626;text-align:center;font-weight:600"></p>
+
+        <!-- Submit -->
+        <button onclick="window._login()"
+          style="width:100%;background:linear-gradient(135deg,#059669,#10b981);color:white;padding:14px;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:.05em;display:flex;align-items:center;justify-content:center;gap:8px;transition:opacity .15s"
+          onmouseover="this.style.opacity='.9'" onmouseout="this.style.opacity='1'">
+          <span>כניסה למערכת</span>
+          <span class="material-symbols-outlined">login</span>
+        </button>
+
+        <p style="font-size:10px;text-align:center;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em">הגישה תותאם לפי הרשאות המשתמש</p>
+        <div id="debugLog" style="margin-top:12px;padding:8px;background:#f1f5f9;border-radius:8px;font-size:11px;color:#475569;text-align:right;min-height:20px;direction:rtl"></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ═══════════════════════ APP SHELL ═══════════════════════ -->
+<div id="appShell" class="flex-col min-h-screen flex" style="display:none;position:relative;z-index:1">
+
+  <!-- TOP HEADER -->
+  <header class="app-header sticky top-0 z-50 shrink-0">
+    <div class="header-inner">
+      <div class="header-right">
+        <button id="resetBtn" onclick="window._resetAllData()" class="hidden header-icon-btn danger" title="איפוס">
+          <span class="material-symbols-outlined">delete_sweep</span>
+        </button>
+        <button onclick="window._logout()" class="header-icon-btn" title="יציאה">
+          <span class="material-symbols-outlined">logout</span>
+        </button>
+      </div>
+      <div class="header-center">
+        <img src="data:image/png;base64,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" alt="אריאל" class="header-logo"/>
+        <span class="header-unit">פלוגת אריאל</span>
+      </div>
+      <div class="header-left">
+        <button onclick="window._openProfile()" class="profile-chip">
+          <div id="sideProfilePhoto" class="profile-avatar">
+            <span class="material-symbols-outlined" style="font-size:15px;color:#4fc3f7">person</span>
+          </div>
+          <span id="sideProfileName" class="profile-name"></span>
+        </button>
+      </div>
+    </div>
+    <div class="date-strip">
+      <span id="headerDateHe" class="date-he"></span>
+      <span class="date-sep">·</span>
+      <span id="headerDateLat" class="date-lat"></span>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main id="mainContent" class="flex-1 overflow-y-auto" style="padding-bottom:80px;background:#111318"></main>
+
+  <!-- BOTTOM NAV rasp -->
+  <nav id="raspNav" class="bottom-nav" style="display:none">
+    <a data-nav="warehouse_a" onclick="window._nav('warehouse_a')" class="bnav-item">
+      <span class="material-symbols-outlined bnav-icon">inventory_2</span>
+      <span class="bnav-label">מחסן א׳</span>
+    </a>
+    <a data-nav="warehouse_b" onclick="window._nav('warehouse_b')" class="bnav-item">
+      <span class="material-symbols-outlined bnav-icon">warehouse</span>
+      <span class="bnav-label">מחסן ב׳</span>
+    </a>
+    <a data-nav="warehouse_donations" onclick="window._nav('warehouse_donations')" class="bnav-item">
+      <span class="material-symbols-outlined bnav-icon">volunteer_activism</span>
+      <span class="bnav-label">תרומות</span>
+    </a>
+    <a data-nav="register" onclick="window._nav('register')" class="bnav-item">
+      <span class="material-symbols-outlined bnav-icon">assignment</span>
+      <span class="bnav-label">רישום</span>
+    </a>
+    <a data-nav="history" onclick="window._nav('history')" class="bnav-item">
+      <span class="material-symbols-outlined bnav-icon">history</span>
+      <span class="bnav-label">היסטוריה</span>
+    </a>
+    <a data-nav="soldiers" onclick="window._nav('soldiers')" class="bnav-item">
+      <span class="material-symbols-outlined bnav-icon">groups</span>
+      <span class="bnav-label">חיילים</span>
+    </a>
+    <a data-nav="requests" onclick="window._nav('requests')" class="bnav-item">
+      <span class="material-symbols-outlined bnav-icon">reorder</span>
+      <span class="bnav-label">בקשות</span>
+    </a>
+    <a data-nav="armory" onclick="window._nav('armory')" class="bnav-item">
+      <span class="material-symbols-outlined bnav-icon">photo_camera</span>
+      <span class="bnav-label">צל"מים</span>
+    </a>
+  </nav>
+
+  <!-- BOTTOM NAV soldier -->
+  <nav id="soldierNav" class="bottom-nav" style="display:none">
+    <a data-nav="my_gear" onclick="window._nav('my_gear')" class="bnav-item">
+      <span class="material-symbols-outlined bnav-icon">inventory_2</span>
+      <span class="bnav-label">הציוד שלי</span>
+    </a>
+    <a data-nav="my_history" onclick="window._nav('my_history')" class="bnav-item">
+      <span class="material-symbols-outlined bnav-icon">history</span>
+      <span class="bnav-label">היסטוריה</span>
+    </a>
+    <a data-nav="my_requests" onclick="window._nav('my_requests')" class="bnav-item">
+      <span class="material-symbols-outlined bnav-icon">reorder</span>
+      <span class="bnav-label">בקשות</span>
+    </a>
+  </nav>
+
+  <div id="resetBtnSide" style="display:none"></div>
+</div>
 
 <!-- ═══════════════════════ LOGIN SCREEN ═══════════════════════ -->
 <div id="loginScreen" class="min-h-screen flex flex-col" style="display:flex">
@@ -2539,6 +3047,16 @@ tailwind.config = {
         </a>
       </nav>
       <div class="p-4 border-t border-white/5 space-y-2">
+        <button onclick="window._openProfile()" class="w-full py-2.5 flex items-center gap-3 px-3 hover:bg-white/5 rounded-sm transition-all group">
+          <div id="sideProfilePhoto" class="w-8 h-8 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center overflow-hidden shrink-0">
+            <span class="material-symbols-outlined text-primary text-sm">person</span>
+          </div>
+          <div class="flex-1 text-right min-w-0">
+            <p id="sideProfileName" class="font-label text-xs font-bold text-on-surface truncate"></p>
+            <p class="font-label text-[10px] text-on-surface-variant">עריכת פרופיל</p>
+          </div>
+          <span class="material-symbols-outlined text-on-surface-variant/40 text-sm group-hover:text-primary transition-colors">edit</span>
+        </button>
         <button id="resetBtnSide" onclick="window._resetAllData()" class="hidden w-full py-2 text-error/70 border border-error/20 bg-error/5 font-label text-xs uppercase tracking-widest rounded-sm hover:bg-error/10 transition-all flex items-center justify-center gap-1">
           <span class="material-symbols-outlined text-sm">delete_sweep</span>איפוס נתונים
         </button>
