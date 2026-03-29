@@ -111,6 +111,10 @@
     const emailRow = document.getElementById('loginEmailRow');
     const tabId = document.getElementById('loginTabId');
     const tabEmail = document.getElementById('loginTabEmail');
+    if (tabId) { tabId.style.background = tab==='id' ? '#1a73e8' : 'transparent'; tabId.style.color = tab==='id' ? 'white' : '#8a97a8'; }
+    if (tabEmail) { tabEmail.style.background = tab==='email' ? '#1a73e8' : 'transparent'; tabEmail.style.color = tab==='email' ? 'white' : '#8a97a8'; }
+    const tabId = document.getElementById('loginTabId');
+    const tabEmail = document.getElementById('loginTabEmail');
     if (tab === 'id') {
       idRow.style.display = 'block';
       emailRow.style.display = 'none';
@@ -125,7 +129,7 @@
   };
 
   window._login = async function() {
-    const pass = document.getElementById('loginPass').value.trim();
+    const pass = document.getElementById('loginPassword').value.trim();
     const err = document.getElementById('loginError');
     err.textContent = '';
     if (!pass) { err.textContent = 'נא להזין סיסמה'; return; }
@@ -2503,202 +2507,246 @@ tailwind.config = {
   .field-inp:focus{border-color:#059669}
   .field-inp option{background:white}
 
-  /* ═══ GARMIN-STYLE APP SHELL ═══ */
-  body { background: #111318 !important; color: #e0e0e0 !important; }
+  
+/* ═══ CLEAN MODERN SHELL ═══ */
 
-  /* Header */
-  .app-header {
-    background: #1a1c23;
-    border-bottom: 1px solid #2a2d38;
-    box-shadow: 0 2px 16px rgba(0,0,0,0.4);
-  }
-  .header-inner {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 16px 6px;
-    direction: rtl;
-  }
-  .header-center {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 2px;
-    flex: 1;
-  }
-  .header-logo {
-    height: 38px;
-    width: auto;
-    filter: invert(1) brightness(1.2);
-    object-fit: contain;
-  }
-  .header-unit {
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.12em;
-    color: #4fc3f7;
-    text-transform: uppercase;
-  }
-  .header-right, .header-left {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    min-width: 80px;
-  }
-  .header-left { justify-content: flex-end; }
-  .header-right { justify-content: flex-start; }
-  .header-icon-btn {
-    width: 36px; height: 36px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.06);
-    border: none; cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    color: #94a3b8;
-    transition: all .15s;
-  }
-  .header-icon-btn:hover { background: rgba(79,195,247,0.15); color: #4fc3f7; }
-  .header-icon-btn.danger { color: #f87171; }
-  .header-icon-btn.danger:hover { background: rgba(248,113,113,0.15); }
-  .header-icon-btn .material-symbols-outlined { font-size: 18px; }
-  .profile-chip {
-    display: flex; align-items: center; gap: 8px;
-    background: rgba(79,195,247,0.08);
-    border: 1px solid rgba(79,195,247,0.2);
-    border-radius: 20px;
-    padding: 4px 10px 4px 6px;
-    cursor: pointer;
-    transition: all .15s;
-    direction: rtl;
-  }
-  .profile-chip:hover { background: rgba(79,195,247,0.15); }
-  .profile-avatar {
-    width: 26px; height: 26px;
-    border-radius: 50%;
-    background: rgba(79,195,247,0.15);
-    border: 1px solid rgba(79,195,247,0.3);
-    display: flex; align-items: center; justify-content: center;
-    overflow: hidden; shrink: 0;
-  }
-  .profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
-  .profile-name {
-    font-size: 12px; font-weight: 700;
-    color: #e0e0e0;
-    max-width: 70px;
-    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  }
-  .date-strip {
-    display: flex; align-items: center; justify-content: center;
-    gap: 8px;
-    padding: 4px 16px 8px;
-    direction: rtl;
-  }
-  .date-he { font-size: 11px; font-weight: 600; color: #94a3b8; }
-  .date-sep { color: #4fc3f7; font-size: 14px; }
-  .date-lat { font-size: 11px; color: #64748b; }
+/* Reset body to light */
+body {
+  background: #f0f2f5 !important;
+  color: #1a1f2e !important;
+  font-family: 'Inter', 'Heebo', sans-serif;
+}
 
-  /* Bottom Nav */
-  .bottom-nav {
-    position: fixed;
-    bottom: 0; left: 0; right: 0;
-    z-index: 50;
-    background: #1a1c23;
-    border-top: 1px solid #2a2d38;
-    display: flex !important;
-    flex-direction: row-reverse;
-    justify-content: space-around;
-    align-items: center;
-    padding: 6px 4px;
-    box-shadow: 0 -4px 20px rgba(0,0,0,0.4);
-  }
-  .bnav-item {
-    display: flex; flex-direction: column;
-    align-items: center; gap: 2px;
-    padding: 6px 8px;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: all .15s;
-    flex: 1;
-    color: #546070;
-    text-decoration: none;
-    position: relative;
-  }
-  .bnav-item:hover { color: #94a3b8; }
-  .bnav-item.nav-active { color: #4fc3f7 !important; }
-  .bnav-item.nav-active::after {
-    content: '';
-    position: absolute;
-    top: 0; left: 20%; right: 20%;
-    height: 2px;
-    background: #4fc3f7;
-    border-radius: 0 0 2px 2px;
-  }
-  .bnav-icon { font-size: 22px !important; }
-  .bnav-label { font-size: 9px; font-weight: 700; letter-spacing: .03em; }
+/* Header - clean white card */
+.app-header {
+  background: #ffffff;
+  border-bottom: 1px solid #e5e9f0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px 6px;
+  direction: rtl;
+}
+.header-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  flex: 1;
+}
+.header-logo {
+  height: 42px;
+  width: auto;
+  object-fit: contain;
+  filter: none;
+}
+.header-unit {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #1a73e8;
+  text-transform: uppercase;
+}
+.header-right, .header-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 90px;
+}
+.header-left { justify-content: flex-end; }
+.header-right { justify-content: flex-start; }
+.header-icon-btn {
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  background: #f0f2f5;
+  border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: #5f6b7a;
+  transition: all .15s;
+  font-family: inherit;
+}
+.header-icon-btn:hover { background: #e3eaf5; color: #1a73e8; }
+.header-icon-btn.danger { color: #d93025; }
+.header-icon-btn.danger:hover { background: #fce8e6; }
+.header-icon-btn .material-symbols-outlined { font-size: 18px; }
 
-  /* Override existing nav-link for active state */
-  [data-nav].nav-active .bnav-icon,
-  [data-nav].nav-active .bnav-label { color: #4fc3f7; }
+.profile-chip {
+  display: flex; align-items: center; gap: 8px;
+  background: #f0f7ff;
+  border: 1.5px solid #c5d8f5;
+  border-radius: 20px;
+  padding: 5px 12px 5px 6px;
+  cursor: pointer;
+  transition: all .15s;
+  direction: rtl;
+  font-family: inherit;
+}
+.profile-chip:hover { background: #dceeff; border-color: #1a73e8; }
+.profile-avatar {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: #c5d8f5;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.profile-avatar .material-symbols-outlined { font-size: 16px; color: #1a73e8; }
+.profile-name {
+  font-size: 13px; font-weight: 700;
+  color: #1a1f2e;
+  max-width: 80px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
 
-  /* Cards in garmin style */
-  .bg-surface-container,
-  .bg-surface-container-low,
-  .bg-surface-container-lowest,
-  .bg-surface-container-high,
-  .bg-surface-container-highest,
-  .bg-background { background: #1e2130 !important; }
+.date-strip {
+  display: flex; align-items: center; justify-content: center;
+  gap: 8px;
+  padding: 3px 16px 8px;
+  direction: rtl;
+}
+.date-he { font-size: 12px; font-weight: 600; color: #3c4a5c; }
+.date-sep { color: #1a73e8; }
+.date-lat { font-size: 11px; color: #8a97a8; }
 
-  /* Table rows */
-  tr:hover td { background: rgba(79,195,247,0.04) !important; }
+/* Bottom Nav */
+.bottom-nav {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  z-index: 50;
+  background: #ffffff;
+  border-top: 1px solid #e5e9f0;
+  display: flex !important;
+  flex-direction: row-reverse;
+  justify-content: space-around;
+  align-items: center;
+  padding: 6px 2px env(safe-area-inset-bottom, 6px);
+  box-shadow: 0 -2px 12px rgba(0,0,0,0.08);
+}
+.bnav-item {
+  display: flex; flex-direction: column;
+  align-items: center; gap: 2px;
+  padding: 6px 4px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all .15s;
+  flex: 1;
+  color: #9aa5b4;
+  text-decoration: none;
+  position: relative;
+  border: none; background: transparent; font-family: inherit;
+}
+.bnav-item:hover { color: #5f6b7a; }
+.bnav-item.nav-active { color: #1a73e8 !important; }
+.bnav-item.nav-active::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 15%; right: 15%;
+  height: 3px;
+  background: #1a73e8;
+  border-radius: 0 0 3px 3px;
+}
+.bnav-icon { font-size: 22px !important; }
+.bnav-label { font-size: 9px; font-weight: 700; letter-spacing: .02em; }
 
-  /* Form drawer */
-  #formDrawer { background: #1a1c23 !important; border-right: 1px solid #2a2d38 !important; }
-  #drawerBody { background: #1a1c23; }
-  #drawerFooter { background: #151720 !important; border-top: 1px solid #2a2d38 !important; }
+/* Main content bg */
+#mainContent {
+  background: #f0f2f5 !important;
+  direction: rtl;
+}
 
-  /* Modal */
-  #mBx { background: #1a1c23 !important; border: 1px solid #2a2d38 !important; }
+/* Cards stay white */
+.bg-surface-container,
+.bg-surface-container-low,
+.bg-surface-container-lowest,
+.bg-surface-container-high,
+.bg-surface-container-highest {
+  background: #ffffff !important;
+}
+.bg-background { background: #f0f2f5 !important; }
 
-  /* Inputs garmin style */
-  .field-inp {
-    background: #111318 !important;
-    border: 1px solid #2a2d38 !important;
-    color: #e0e0e0 !important;
-    border-radius: 8px !important;
-  }
-  .field-inp:focus { border-color: #4fc3f7 !important; box-shadow: 0 0 0 2px rgba(79,195,247,0.15) !important; }
+/* Text colors */
+.text-on-surface { color: #1a1f2e !important; }
+.text-on-surface-variant { color: #5f6b7a !important; }
 
-  /* Primary color overrides → cyan */
-  .text-primary { color: #4fc3f7 !important; }
-  .bg-primary { background: #4fc3f7 !important; }
-  .border-primary { border-color: #4fc3f7 !important; }
-  .bg-primary\/10 { background: rgba(79,195,247,0.1) !important; }
-  .bg-primary\/20 { background: rgba(79,195,247,0.2) !important; }
-  .border-primary\/20 { border-color: rgba(79,195,247,0.2) !important; }
-  .border-primary\/30 { border-color: rgba(79,195,247,0.3) !important; }
-  .hover\:text-primary:hover { color: #4fc3f7 !important; }
-  .hover\:bg-primary\/10:hover { background: rgba(79,195,247,0.1) !important; }
+/* Primary → Google Blue */
+.text-primary { color: #1a73e8 !important; }
+.bg-primary { background: #1a73e8 !important; }
+.border-primary { border-color: #1a73e8 !important; }
+.bg-primary\/10 { background: rgba(26,115,232,0.1) !important; }
+.bg-primary\/20 { background: rgba(26,115,232,0.15) !important; }
+.border-primary\/20 { border-color: rgba(26,115,232,0.25) !important; }
+.hover\:text-primary:hover { color: #1a73e8 !important; }
 
-  /* Buttons */
-  .btn-save { background: #4fc3f7 !important; color: #0d1117 !important; border-radius: 10px !important; font-weight: 700 !important; }
-  .btn-save:hover { background: #38b2e8 !important; }
+/* Nav link active */
+.nav-link.text-primary { color: #1a73e8 !important; }
+.nav-link.text-primary::before { background: #1a73e8 !important; }
 
-  /* Stats border colors */
-  .border-r-2.border-primary { border-color: #4fc3f7 !important; }
-  .border-r-2.border-secondary { border-color: #06b6d4 !important; }
+/* Buttons */
+.btn-save {
+  background: #1a73e8 !important;
+  color: #ffffff !important;
+  border-radius: 10px !important;
+  font-weight: 700 !important;
+}
+.btn-save:hover { background: #1557b0 !important; }
 
-  /* Nav link active */
-  .nav-link.text-primary { color: #4fc3f7 !important; }
-  .nav-link.text-primary::before { background: #4fc3f7 !important; }
+/* Form drawer */
+#formDrawer { background: #ffffff !important; border-right: 1px solid #e5e9f0 !important; }
+#drawerFooter { background: #f8faff !important; border-top: 1px solid #e5e9f0 !important; }
 
-  /* Page content alignment - right */
-  #mainContent { direction: rtl; text-align: right; }
-  #mainContent * { direction: rtl; }
+/* Inputs */
+.field-inp {
+  background: #ffffff !important;
+  border: 1.5px solid #dce3ee !important;
+  color: #1a1f2e !important;
+  border-radius: 10px !important;
+}
+.field-inp:focus { border-color: #1a73e8 !important; box-shadow: 0 0 0 3px rgba(26,115,232,0.12) !important; }
 
-  /* Scrollbar */
-  ::-webkit-scrollbar { width: 4px; }
-  ::-webkit-scrollbar-track { background: #111318; }
-  ::-webkit-scrollbar-thumb { background: #2a2d38; border-radius: 4px; }
-  ::-webkit-scrollbar-thumb:hover { background: #4fc3f7; }
+/* Login screen fix */
+#loginScreen {
+  background: #f0f2f5;
+  z-index: 100;
+  position: relative;
+}
+#loginScreen .bg-surface-container { background: #ffffff !important; }
+
+/* Table */
+thead tr { background: #f8faff !important; }
+tr:hover td { background: #f5f8ff !important; }
+.divide-y > tr { border-color: #edf0f5 !important; }
+
+/* Stat cards border */
+.border-r-2.border-primary { border-color: #1a73e8 !important; }
+.border-r-2.border-secondary { border-color: #0097a7 !important; }
+.border-r-2.border-tertiary { border-color: #f57c00 !important; }
+.border-r-2.border-error { border-color: #d93025 !important; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: #f0f2f5; }
+::-webkit-scrollbar-thumb { background: #c5cdd8; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #1a73e8; }
+
+/* Shadows softer */
+.shadow-lg { box-shadow: 0 4px 16px rgba(0,0,0,0.08) !important; }
+.card-glow { box-shadow: 0 2px 8px rgba(0,0,0,0.06) !important; }
+
+/* White/5 borders → light gray */
+.border-white\/5 { border-color: #e5e9f0 !important; }
+.border-white\/10 { border-color: #dce3ee !important; }
+.divide-white\/5 > * { border-color: #edf0f5 !important; }
+
+/* Login screen tidy */
+#loginScreen h2 { color: #1a1f2e !important; }
+#loginScreen h2 span { color: #1a73e8 !important; }
+
+/* HUD bar - hide completely */
+.h-7.bg-surface-container-lowest { display: none !important; }
 </style>
 </head>
 
@@ -2722,80 +2770,77 @@ tailwind.config = {
 <div id="formDrawerBackdrop" onclick="closeModal()" class="fixed inset-0 z-[155] bg-black/20 backdrop-blur-[1px]" style="display:none"></div>
 
 <!-- ═══════════════════════ LOGIN SCREEN ═══════════════════════ -->
-<div id="loginScreen" class="min-h-screen flex flex-col" style="display:flex">
-  <!-- HUD bar -->
-  <div class="w-full bg-surface-container-lowest h-8 flex items-center justify-between px-6 border-b border-outline-variant/10 shrink-0">
-    <div class="flex gap-4">
-      <span class="text-[10px] font-label text-on-surface-variant tracking-widest uppercase">מעמד מערכת: מבצעי</span>
-      <span class="text-[10px] font-label text-on-surface-variant tracking-widest uppercase">הצפנה: AES-256</span>
+<div id="loginScreen" class="min-h-screen flex flex-col items-center justify-center" style="display:flex;background:#f0f2f5;direction:rtl">
+  <!-- Same header style as app -->
+  <div style="background:#fff;border-bottom:1px solid #e5e9f0;box-shadow:0 2px 8px rgba(0,0,0,0.08);width:100%;position:fixed;top:0;left:0;right:0;z-index:50">
+    <div style="display:flex;align-items:center;justify-content:center;padding:10px 16px 4px;gap:8px">
+      <img src="data:image/png;base64,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" style="height:38px;width:auto;object-fit:contain"/>
     </div>
-    <span class="text-[10px] font-label text-primary tracking-widest uppercase">32.0853° N, 34.7818° E</span>
+    <div style="text-align:center;padding:0 16px 8px;font-size:11px;font-weight:800;letter-spacing:0.08em;color:#1a73e8;text-transform:uppercase">
+      פלוגת אריאל
+    </div>
   </div>
-  <!-- Main -->
-  <main class="flex-grow flex items-center justify-center px-4 py-12">
-    <div class="w-full max-w-md">
-      <div class="mb-8 text-right">
-        <span class="text-[10px] font-label text-primary uppercase tracking-widest block mb-2">מערכת ניהול מבצעית אחודה</span>
-        <h2 class="text-5xl font-headline font-extrabold tracking-tighter">הזדהות<br/><span class="text-primary">משתמש</span></h2>
+
+  <!-- Login card -->
+  <div style="width:100%;max-width:400px;padding:16px;margin-top:100px">
+    <div style="background:#fff;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,0.08);border:1px solid #e5e9f0;overflow:hidden">
+      <!-- Card header -->
+      <div style="padding:24px 24px 0;text-align:right">
+        <h2 style="font-size:24px;font-weight:800;color:#1a1f2e;margin:0 0 4px">כניסה למערכת</h2>
+        <p style="font-size:13px;color:#8a97a8;margin:0 0 20px">הזן את פרטי הכניסה שלך</p>
       </div>
-      <div class="bg-surface-container p-8 rounded-sm border-r-2 border-primary shadow-lg space-y-5">
 
-        <!-- Tab toggle -->
-        <div class="flex bg-surface-container-high rounded-sm p-1 gap-1">
-          <button id="loginTabId"
-            style="flex:1;padding:8px;border-radius:4px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;background:var(--tw-color-primary,#059669);color:white;border:none;cursor:pointer;transition:all .2s"
-            onclick="window._setLoginTab('id')">מספר אישי</button>
-          <button id="loginTabEmail"
-            style="flex:1;padding:8px;border-radius:4px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;background:transparent;color:#64748b;border:none;cursor:pointer;transition:all .2s"
-            onclick="window._setLoginTab('email')">אימייל</button>
-        </div>
-
-        <!-- Personal ID row -->
-        <div id="loginIdRow">
-          <label style="display:block;font-size:10px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">מספר אישי</label>
-          <input id="loginPersonalId" type="text" placeholder="הזן מספר אישי"
-            style="width:100%;background:white;border:2px solid #e2e8f0;border-radius:8px;padding:10px 12px;font-size:15px;color:#1e293b;outline:none;text-align:right;transition:border-color .15s"
-            onfocus="this.style.borderColor='#059669'"
-            onblur="this.style.borderColor='#e2e8f0'"
-            onkeydown="if(event.key==='Enter')window._login()"/>
-        </div>
-
-        <!-- Email row (hidden by default) -->
-        <div id="loginEmailRow" style="display:none">
-          <label style="display:block;font-size:10px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">אימייל</label>
-          <input id="loginEmail" type="email" placeholder="your@email.com"
-            style="width:100%;background:white;border:2px solid #e2e8f0;border-radius:8px;padding:10px 12px;font-size:15px;color:#1e293b;outline:none;text-align:right;transition:border-color .15s"
-            onfocus="this.style.borderColor='#059669'"
-            onblur="this.style.borderColor='#e2e8f0'"
-            onkeydown="if(event.key==='Enter')window._login()"/>
-        </div>
-
-        <!-- Password -->
-        <div>
-          <label style="display:block;font-size:10px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">סיסמה</label>
-          <input id="loginPass" type="password" placeholder="••••••••"
-            style="width:100%;background:white;border:2px solid #e2e8f0;border-radius:8px;padding:10px 12px;font-size:15px;color:#1e293b;outline:none;text-align:right;transition:border-color .15s"
-            onfocus="this.style.borderColor='#059669'"
-            onblur="this.style.borderColor='#e2e8f0'"
-            onkeydown="if(event.key==='Enter')window._login()"/>
-        </div>
-
-        <!-- Error -->
-        <p id="loginError" style="min-height:18px;font-size:12px;color:#dc2626;text-align:center;font-weight:600"></p>
-
-        <!-- Submit -->
-        <button onclick="window._login()"
-          style="width:100%;background:linear-gradient(135deg,#059669,#10b981);color:white;padding:14px;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:.05em;display:flex;align-items:center;justify-content:center;gap:8px;transition:opacity .15s"
-          onmouseover="this.style.opacity='.9'" onmouseout="this.style.opacity='1'">
-          <span>כניסה למערכת</span>
-          <span class="material-symbols-outlined">login</span>
+      <!-- Tabs -->
+      <div style="display:flex;margin:0 24px 16px;background:#f0f2f5;border-radius:10px;padding:3px;gap:3px">
+        <button id="loginTabId" onclick="window._setLoginTab('id')"
+          style="flex:1;padding:8px;border-radius:8px;font-size:13px;font-weight:700;background:#1a73e8;color:white;border:none;cursor:pointer;transition:all .2s;font-family:inherit">
+          מספר אישי
         </button>
+        <button id="loginTabEmail" onclick="window._setLoginTab('email')"
+          style="flex:1;padding:8px;border-radius:8px;font-size:13px;font-weight:600;background:transparent;color:#8a97a8;border:none;cursor:pointer;transition:all .2s;font-family:inherit">
+          אימייל
+        </button>
+      </div>
 
-        <p style="font-size:10px;text-align:center;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em">הגישה תותאם לפי הרשאות המשתמש</p>
-        <div id="debugLog" style="margin-top:12px;padding:8px;background:#f1f5f9;border-radius:8px;font-size:11px;color:#475569;text-align:right;min-height:20px;direction:rtl"></div>
+      <!-- Form -->
+      <div style="padding:0 24px 24px;space-y:12px">
+        <div id="loginIdRow" style="margin-bottom:12px">
+          <label style="display:block;font-size:11px;font-weight:700;color:#5f6b7a;text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px;text-align:right">מספר אישי</label>
+          <input id="loginPersonalId" type="text" placeholder="הזן מספר אישי"
+            style="width:100%;background:#f8faff;border:1.5px solid #dce3ee;border-radius:10px;padding:11px 14px;font-size:14px;color:#1a1f2e;outline:none;text-align:right;box-sizing:border-box;font-family:inherit"
+            onfocus="this.style.borderColor='#1a73e8';this.style.boxShadow='0 0 0 3px rgba(26,115,232,0.12)'"
+            onblur="this.style.borderColor='#dce3ee';this.style.boxShadow='none'"
+            onkeydown="if(event.key==='Enter')window._login()"/>
+        </div>
+        <div id="loginEmailRow" style="display:none;margin-bottom:12px">
+          <label style="display:block;font-size:11px;font-weight:700;color:#5f6b7a;text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px;text-align:right">אימייל</label>
+          <input id="loginEmail" type="email" placeholder="your@email.com"
+            style="width:100%;background:#f8faff;border:1.5px solid #dce3ee;border-radius:10px;padding:11px 14px;font-size:14px;color:#1a1f2e;outline:none;text-align:right;box-sizing:border-box;font-family:inherit"
+            onfocus="this.style.borderColor='#1a73e8';this.style.boxShadow='0 0 0 3px rgba(26,115,232,0.12)'"
+            onblur="this.style.borderColor='#dce3ee';this.style.boxShadow='none'"
+            onkeydown="if(event.key==='Enter')window._login()"/>
+        </div>
+        <div style="margin-bottom:20px">
+          <label style="display:block;font-size:11px;font-weight:700;color:#5f6b7a;text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px;text-align:right">סיסמה</label>
+          <input id="loginPassword" type="password" placeholder="••••••••"
+            style="width:100%;background:#f8faff;border:1.5px solid #dce3ee;border-radius:10px;padding:11px 14px;font-size:14px;color:#1a1f2e;outline:none;text-align:right;box-sizing:border-box;font-family:inherit"
+            onfocus="this.style.borderColor='#1a73e8';this.style.boxShadow='0 0 0 3px rgba(26,115,232,0.12)'"
+            onblur="this.style.borderColor='#dce3ee';this.style.boxShadow='none'"
+            onkeydown="if(event.key==='Enter')window._login()"/>
+        </div>
+        <p id="loginError" style="color:#d93025;font-size:12px;text-align:center;margin:-8px 0 12px;min-height:16px"></p>
+        <button onclick="window._login()"
+          style="width:100%;padding:13px;background:#1a73e8;color:white;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px"
+          onmouseover="this.style.background='#1557b0'"
+          onmouseout="this.style.background='#1a73e8'">
+          <span class="material-symbols-outlined" style="font-size:18px">login</span>
+          כניסה למערכת
+        </button>
+        <p style="text-align:center;font-size:11px;color:#9aa5b4;margin-top:14px">הגישה תותאם לפי הרשאות המשתמש</p>
       </div>
     </div>
-  </main>
+  </div>
+  <p id="debugLog" style="position:fixed;bottom:16px;right:16px;font-size:11px;color:#8a97a8;max-width:280px;text-align:right"></p>
 </div>
 
 <!-- ═══════════════════════ APP SHELL ═══════════════════════ -->
@@ -2891,257 +2936,6 @@ tailwind.config = {
 </div>
 
 <!-- ═══════════════════════ LOGIN SCREEN ═══════════════════════ -->
-<div id="loginScreen" class="min-h-screen flex flex-col" style="display:flex">
-  <!-- HUD bar -->
-  <div class="w-full bg-surface-container-lowest h-8 flex items-center justify-between px-6 border-b border-outline-variant/10 shrink-0">
-    <div class="flex gap-4">
-      <span class="text-[10px] font-label text-on-surface-variant tracking-widest uppercase">מעמד מערכת: מבצעי</span>
-      <span class="text-[10px] font-label text-on-surface-variant tracking-widest uppercase">הצפנה: AES-256</span>
-    </div>
-    <span class="text-[10px] font-label text-primary tracking-widest uppercase">32.0853° N, 34.7818° E</span>
-  </div>
-  <!-- Main -->
-  <main class="flex-grow flex items-center justify-center px-4 py-12">
-    <div class="w-full max-w-md">
-      <div class="mb-8 text-right">
-        <span class="text-[10px] font-label text-primary uppercase tracking-widest block mb-2">מערכת ניהול מבצעית אחודה</span>
-        <h2 class="text-5xl font-headline font-extrabold tracking-tighter">הזדהות<br/><span class="text-primary">משתמש</span></h2>
-      </div>
-      <div class="bg-surface-container p-8 rounded-sm border-r-2 border-primary shadow-lg space-y-5">
-
-        <!-- Tab toggle -->
-        <div class="flex bg-surface-container-high rounded-sm p-1 gap-1">
-          <button id="loginTabId"
-            style="flex:1;padding:8px;border-radius:4px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;background:var(--tw-color-primary,#059669);color:white;border:none;cursor:pointer;transition:all .2s"
-            onclick="window._setLoginTab('id')">מספר אישי</button>
-          <button id="loginTabEmail"
-            style="flex:1;padding:8px;border-radius:4px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;background:transparent;color:#64748b;border:none;cursor:pointer;transition:all .2s"
-            onclick="window._setLoginTab('email')">אימייל</button>
-        </div>
-
-        <!-- Personal ID row -->
-        <div id="loginIdRow">
-          <label style="display:block;font-size:10px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">מספר אישי</label>
-          <input id="loginPersonalId" type="text" placeholder="הזן מספר אישי"
-            style="width:100%;background:white;border:2px solid #e2e8f0;border-radius:8px;padding:10px 12px;font-size:15px;color:#1e293b;outline:none;text-align:right;transition:border-color .15s"
-            onfocus="this.style.borderColor='#059669'"
-            onblur="this.style.borderColor='#e2e8f0'"
-            onkeydown="if(event.key==='Enter')window._login()"/>
-        </div>
-
-        <!-- Email row (hidden by default) -->
-        <div id="loginEmailRow" style="display:none">
-          <label style="display:block;font-size:10px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">אימייל</label>
-          <input id="loginEmail" type="email" placeholder="your@email.com"
-            style="width:100%;background:white;border:2px solid #e2e8f0;border-radius:8px;padding:10px 12px;font-size:15px;color:#1e293b;outline:none;text-align:right;transition:border-color .15s"
-            onfocus="this.style.borderColor='#059669'"
-            onblur="this.style.borderColor='#e2e8f0'"
-            onkeydown="if(event.key==='Enter')window._login()"/>
-        </div>
-
-        <!-- Password -->
-        <div>
-          <label style="display:block;font-size:10px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">סיסמה</label>
-          <input id="loginPass" type="password" placeholder="••••••••"
-            style="width:100%;background:white;border:2px solid #e2e8f0;border-radius:8px;padding:10px 12px;font-size:15px;color:#1e293b;outline:none;text-align:right;transition:border-color .15s"
-            onfocus="this.style.borderColor='#059669'"
-            onblur="this.style.borderColor='#e2e8f0'"
-            onkeydown="if(event.key==='Enter')window._login()"/>
-        </div>
-
-        <!-- Error -->
-        <p id="loginError" style="min-height:18px;font-size:12px;color:#dc2626;text-align:center;font-weight:600"></p>
-
-        <!-- Submit -->
-        <button onclick="window._login()"
-          style="width:100%;background:linear-gradient(135deg,#059669,#10b981);color:white;padding:14px;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:.05em;display:flex;align-items:center;justify-content:center;gap:8px;transition:opacity .15s"
-          onmouseover="this.style.opacity='.9'" onmouseout="this.style.opacity='1'">
-          <span>כניסה למערכת</span>
-          <span class="material-symbols-outlined">login</span>
-        </button>
-
-        <p style="font-size:10px;text-align:center;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em">הגישה תותאם לפי הרשאות המשתמש</p>
-        <div id="debugLog" style="margin-top:12px;padding:8px;background:#f1f5f9;border-radius:8px;font-size:11px;color:#475569;text-align:right;min-height:20px;direction:rtl"></div>
-      </div>
-    </div>
-  </main>
-</div>
-
-<!-- ═══════════════════════ APP SHELL ═══════════════════════ -->
-<div id="appShell" class="flex-col min-h-screen flex" style="display:none;position:relative;z-index:1">
-  <!-- Status HUD -->
-  <div class="h-7 bg-surface-container-lowest flex items-center justify-between px-6 border-b border-white/5 shrink-0">
-    <div class="flex gap-4">
-      <span class="font-label text-[10px] text-on-surface-variant uppercase tracking-widest">שהיית מערכת: 14MS</span>
-      <span class="font-label text-[10px] text-on-surface-variant uppercase tracking-widest hidden md:block">32.0853° N, 34.7818° E</span>
-    </div>
-    <div class="flex gap-4 items-center">
-      <span id="hudUser" class="font-label text-[10px] text-on-surface-variant uppercase tracking-widest"></span>
-      <span class="font-label text-[10px] text-primary uppercase tracking-widest flex items-center gap-1">
-        <span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>מחובר
-      </span>
-    </div>
-  </div>
-  <!-- Top App Bar -->
-  <header class="bg-background flex flex-row-reverse justify-between items-center px-6 h-16 sticky top-0 z-50 border-b border-white/5 shadow-[0_2px_12px_rgba(0,0,0,0.07)] shrink-0">
-    <div class="flex items-center gap-4">
-      <button class="material-symbols-outlined text-on-surface/80 hover:bg-white/5 p-2 transition-colors" onclick="document.getElementById('sidebar').classList.toggle('translate-x-full')">notifications</button>
-      <div class="h-8 w-px bg-white/10 mx-1"></div>
-      <h1 class="text-xl font-extrabold text-primary tracking-tighter font-headline uppercase">ניהול מלאי</h1>
-    </div>
-    <div class="flex items-center gap-2">
-      <button onclick="window._logout()" class="font-label text-xs text-on-surface-variant hover:text-error transition-colors px-3 py-2 flex items-center gap-1">
-        <span class="material-symbols-outlined text-sm">logout</span>
-        <span class="hidden md:inline">יציאה</span>
-      </button>
-      <button id="resetBtn" onclick="window._resetAllData()" class="hidden font-label text-xs text-error/60 hover:text-error transition-colors px-3 py-2 flex items-center gap-1 border border-error/20 rounded-sm hover:bg-error/5">
-        <span class="material-symbols-outlined text-sm">delete_sweep</span>
-        <span class="hidden md:inline">איפוס נתונים</span>
-      </button>
-      <button class="md:hidden material-symbols-outlined text-on-surface/80 hover:bg-white/5 p-2 transition-colors" onclick="document.getElementById('mobileMenu').classList.toggle('translate-y-0')">menu</button>
-    </div>
-  </header>
-
-  <!-- Layout: Sidebar + Content -->
-  <div class="flex flex-1 overflow-hidden">
-    <!-- Desktop Sidebar -->
-    <aside class="hidden md:flex flex-col w-56 bg-surface-container-lowest border-l border-white/5 shrink-0">
-      <!-- RASP nav -->
-      <nav id="sidebarRasp" class="flex-1 py-4 space-y-1 px-3">
-        <a data-nav="warehouse_a" onclick="window._nav('warehouse_a')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-sm cursor-pointer text-on-surface/60 hover:text-primary hover:bg-white/5 transition-all font-label text-xs uppercase tracking-widest">
-          <span class="material-symbols-outlined">inventory_2</span><span>מחסן א׳</span>
-        </a>
-        <a data-nav="warehouse_b" onclick="window._nav('warehouse_b')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-sm cursor-pointer text-on-surface/60 hover:text-primary hover:bg-white/5 transition-all font-label text-xs uppercase tracking-widest">
-          <span class="material-symbols-outlined">warehouse</span><span>מחסן ב׳</span>
-        </a>
-        <a data-nav="warehouse_donations" onclick="window._nav('warehouse_donations')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-sm cursor-pointer text-on-surface/60 hover:text-primary hover:bg-white/5 transition-all font-label text-xs uppercase tracking-widest">
-          <span class="material-symbols-outlined">volunteer_activism</span><span>מחסן תרומות</span>
-        </a>
-        <div class="h-px bg-white/5 my-2"></div>
-        <a data-nav="register" onclick="window._nav('register')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-sm cursor-pointer text-on-surface/60 hover:text-primary hover:bg-white/5 transition-all font-label text-xs uppercase tracking-widest">
-          <span class="material-symbols-outlined">assignment</span><span>רישום פעולה</span>
-        </a>
-        <a data-nav="history" onclick="window._nav('history')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-sm cursor-pointer text-on-surface/60 hover:text-primary hover:bg-white/5 transition-all font-label text-xs uppercase tracking-widest">
-          <span class="material-symbols-outlined">history</span><span>היסטוריה</span>
-        </a>
-        <a data-nav="soldiers" onclick="window._nav('soldiers')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-sm cursor-pointer text-on-surface/60 hover:text-primary hover:bg-white/5 transition-all font-label text-xs uppercase tracking-widest">
-          <span class="material-symbols-outlined">badge</span><span>חיילים</span>
-        </a>
-        <a data-nav="requests" onclick="window._nav('requests')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-sm cursor-pointer text-on-surface/60 hover:text-primary hover:bg-white/5 transition-all font-label text-xs uppercase tracking-widest">
-          <span class="material-symbols-outlined">reorder</span><span>בקשות</span>
-        </a>
-        <a data-nav="armory" onclick="window._nav('armory')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-sm cursor-pointer text-on-surface/60 hover:text-primary hover:bg-white/5 transition-all font-label text-xs uppercase tracking-widest">
-          <span class="material-symbols-outlined">photo_camera</span><span>מחסן צל"מים</span>
-        </a>
-      </nav>
-      <!-- SOLDIER nav -->
-      <nav id="sidebarSoldier" class="hidden flex-1 py-4 space-y-1 px-3">
-        <a data-nav="my_gear" onclick="window._nav('my_gear')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-sm cursor-pointer text-on-surface/60 hover:text-primary hover:bg-white/5 transition-all font-label text-xs uppercase tracking-widest">
-          <span class="material-symbols-outlined">inventory_2</span><span>הציוד שלי</span>
-        </a>
-        <a data-nav="my_history" onclick="window._nav('my_history')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-sm cursor-pointer text-on-surface/60 hover:text-primary hover:bg-white/5 transition-all font-label text-xs uppercase tracking-widest">
-          <span class="material-symbols-outlined">history</span><span>ההיסטוריה שלי</span>
-        </a>
-        <a data-nav="my_requests" onclick="window._nav('my_requests')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-sm cursor-pointer text-on-surface/60 hover:text-primary hover:bg-white/5 transition-all font-label text-xs uppercase tracking-widest">
-          <span class="material-symbols-outlined">reorder</span><span>הבקשות שלי</span>
-        </a>
-      </nav>
-      <div class="p-4 border-t border-white/5 space-y-2">
-        <button onclick="window._openProfile()" class="w-full py-2.5 flex items-center gap-3 px-3 hover:bg-white/5 rounded-sm transition-all group">
-          <div id="sideProfilePhoto" class="w-8 h-8 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center overflow-hidden shrink-0">
-            <span class="material-symbols-outlined text-primary text-sm">person</span>
-          </div>
-          <div class="flex-1 text-right min-w-0">
-            <p id="sideProfileName" class="font-label text-xs font-bold text-on-surface truncate"></p>
-            <p class="font-label text-[10px] text-on-surface-variant">עריכת פרופיל</p>
-          </div>
-          <span class="material-symbols-outlined text-on-surface-variant/40 text-sm group-hover:text-primary transition-colors">edit</span>
-        </button>
-        <button id="resetBtnSide" onclick="window._resetAllData()" class="hidden w-full py-2 text-error/70 border border-error/20 bg-error/5 font-label text-xs uppercase tracking-widest rounded-sm hover:bg-error/10 transition-all flex items-center justify-center gap-1">
-          <span class="material-symbols-outlined text-sm">delete_sweep</span>איפוס נתונים
-        </button>
-        <button onclick="window._logout()" class="w-full py-2 text-error border border-error/20 bg-error/5 font-label text-xs uppercase tracking-widest rounded-sm hover:bg-error/10 transition-all">יציאה</button>
-      </div>
-    </aside>
-
-    <!-- Main Content -->
-    <main id="mainContent" class="flex-1 overflow-y-auto bg-background relative">
-      <div class="absolute inset-0 hud-scanline pointer-events-none opacity-30 z-0"></div>
-    </main>
-  </div>
-
-  <!-- Mobile Bottom Nav - rasp -->
-  <nav id="raspNav" class="md:hidden fixed bottom-0 left-0 w-full flex flex-row-reverse justify-around items-center px-2 py-3 bg-surface-container/90 backdrop-blur-xl z-50 border-t border-white/5 shrink-0">
-    <a data-nav="warehouse_a" onclick="window._nav('warehouse_a')" class="flex flex-col items-center p-2 text-on-surface/60 hover:text-primary transition-all cursor-pointer">
-      <span class="material-symbols-outlined">inventory_2</span>
-      <span class="font-label text-[10px] uppercase tracking-widest">מחסן א׳</span>
-    </a>
-    <a data-nav="warehouse_b" onclick="window._nav('warehouse_b')" class="flex flex-col items-center p-2 text-on-surface/60 hover:text-primary transition-all cursor-pointer">
-      <span class="material-symbols-outlined">warehouse</span>
-      <span class="font-label text-[10px] uppercase tracking-widest">מחסן ב׳</span>
-    </a>
-    <a data-nav="register" data-rasp-only onclick="window._nav('register')" class="flex flex-col items-center p-2 text-on-surface/60 hover:text-primary transition-all cursor-pointer">
-      <span class="material-symbols-outlined">assignment</span>
-      <span class="font-label text-[10px] uppercase tracking-widest">רישום</span>
-    </a>
-    <a data-nav="history" onclick="window._nav('history')" class="flex flex-col items-center p-2 text-on-surface/60 hover:text-primary transition-all cursor-pointer">
-      <span class="material-symbols-outlined">history</span>
-      <span class="font-label text-[10px] uppercase tracking-widest">היסטוריה</span>
-    </a>
-    <a data-nav="requests" onclick="window._nav('requests')" class="flex flex-col items-center p-2 text-on-surface/60 hover:text-primary transition-all cursor-pointer">
-      <span class="material-symbols-outlined">reorder</span>
-      <span class="font-label text-[10px] uppercase tracking-widest">בקשות</span>
-    </a>
-    <a data-nav="armory" onclick="window._nav('armory')" class="flex flex-col items-center p-2 text-on-surface/60 hover:text-primary transition-all cursor-pointer">
-      <span class="w-6 h-6 flex items-center justify-center"><svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-  <circle cx="50" cy="50" r="46" fill="none" stroke="currentColor" stroke-width="7"/>
-  <text x="50" y="67" text-anchor="middle" font-size="54" font-weight="900" font-family="Arial,sans-serif" fill="currentColor">צ</text>
-</svg></span>
-      <span class="font-label text-[10px] uppercase tracking-widest">מחסן צל"מ</span>
-    </a>
-  </nav>
-  <!-- Mobile Bottom Nav - soldier -->
-  <nav id="soldierNav" class="hidden md:hidden fixed bottom-0 left-0 w-full flex flex-row-reverse justify-around items-center px-2 py-3 bg-surface-container/90 backdrop-blur-xl z-50 border-t border-white/5 shrink-0">
-    <a data-nav="my_gear" onclick="window._nav('my_gear')" class="flex flex-col items-center p-2 text-on-surface/60 hover:text-primary transition-all cursor-pointer">
-      <span class="material-symbols-outlined">inventory_2</span>
-      <span class="font-label text-[10px] uppercase tracking-widest">הציוד שלי</span>
-    </a>
-    <a data-nav="my_history" onclick="window._nav('my_history')" class="flex flex-col items-center p-2 text-on-surface/60 hover:text-primary transition-all cursor-pointer">
-      <span class="material-symbols-outlined">history</span>
-      <span class="font-label text-[10px] uppercase tracking-widest">היסטוריה</span>
-    </a>
-    <a data-nav="my_requests" onclick="window._nav('my_requests')" class="flex flex-col items-center p-2 text-on-surface/60 hover:text-primary transition-all cursor-pointer">
-      <span class="material-symbols-outlined">reorder</span>
-      <span class="font-label text-[10px] uppercase tracking-widest">בקשות</span>
-    </a>
-  </nav>
-  <div class="md:hidden h-20 shrink-0"></div>
-
-  <!-- ── ITEM DRAWER ── -->
-  <div id="itemDrawer" class="fixed top-0 left-0 h-full w-full sm:w-96 z-[60] transition-all duration-300 ease-in-out flex flex-col shadow-2xl"
-    style="background:white;border-right:1px solid #e2e8f0;transform:translateX(-110%)"
-    data-open="false">
-    <!-- Drawer header -->
-    <div class="flex items-center justify-between px-5 py-4 border-b border-outline-variant/20 shrink-0"
-      style="background:#f8fafb">
-      <div class="flex items-center gap-2">
-        <span class="material-symbols-outlined text-primary text-sm">groups</span>
-        <h2 class="font-headline font-bold text-sm text-on-surface uppercase tracking-wider">חיילים חתומים</h2>
-      </div>
-      <button onclick="window._closeItemDrawer()"
-        class="material-symbols-outlined text-on-surface-variant hover:text-error transition-colors p-1 rounded-sm hover:bg-error/5">
-        close
-      </button>
-    </div>
-    <!-- Drawer content (scrollable) -->
-    <div id="itemDrawerContent" class="flex-1 overflow-y-auto p-5"></div>
-  </div>
-  <!-- Drawer backdrop -->
-  <div id="itemDrawerBackdrop" onclick="window._closeItemDrawer()"
-    class="fixed inset-0 z-[59] bg-black/20 backdrop-blur-[1px] hidden transition-opacity"
-    style="display:none"></div>
-
-</div>
 
 </body>
 </html>
