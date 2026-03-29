@@ -1837,14 +1837,41 @@
             + '</div>';
         }).join('');
 
+    // Items list — all items in this category
+    const itemsHtml = entries.map(([itemId, item]) => {
+      const holder = item.holderId
+        ? '<span class="text-xs font-semibold px-2 py-0.5 rounded-full" style="background:'+catColor+'22;color:'+catColor+'">'+item.holderName+'</span>'
+        : '<span class="text-xs text-slate-400">לא מנופק</span>';
+      const statusBadge = item.status === 'תקין'
+        ? '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-600 border border-emerald-200">תקין</span>'
+        : '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-50 text-amber-600 border border-amber-200">בלאי</span>';
+      return '<div class="flex items-center gap-3 py-2.5 border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors px-4">'
+        + '<div class="flex-1 min-w-0">'
+        + '<p class="font-semibold text-sm text-slate-800 truncate">'+item.name+'</p>'
+        + '<p class="font-mono text-xs text-slate-400">'+itemId+'</p>'
+        + '</div>'
+        + statusBadge
+        + holder
+        + (currentRole === 'rasp'
+          ? '<button onclick="window._armoryAssign(''+cat+'',''+itemId+'')" class="text-xs px-2 py-1 rounded-lg border border-slate-200 text-slate-500 hover:border-primary hover:text-primary transition-colors ml-1">שייך</button>'
+          : '')
+        + '</div>';
+    }).join('');
+
     el.innerHTML = statsHtml + rasOps
-      + '<div class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">'
+      + '<div class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm mb-3">'
       + '<div class="px-4 py-3 border-b border-slate-100 flex items-center justify-between">'
-      + '<p class="font-semibold text-sm text-slate-700">חיילים חתומים</p>'
-      + '<span class="px-2 py-0.5 rounded-full text-xs font-bold" style="background:'+catColor+'22;color:'+catColor+'">'+holdersList.length+'</span>'
+      + '<p class="font-semibold text-sm text-slate-700">פריטים בקטגוריה</p>'
+      + '<span class="px-2 py-0.5 rounded-full text-xs font-bold" style="background:'+catColor+'22;color:'+catColor+'">'+entries.length+'</span>'
       + '</div>'
-      + '<div class="px-4 py-1">' + holdersHtml + '</div>'
-      + '</div>';
+      + '<div>' + itemsHtml + '</div>'
+      + '</div>'
+      + (holdersList.length > 0
+        ? '<div class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">'
+          + '<div class="px-4 py-3 border-b border-slate-100"><p class="font-semibold text-sm text-slate-700">חיילים חתומים ('+holdersList.length+')</p></div>'
+          + '<div class="px-4 py-1">' + holdersHtml + '</div>'
+          + '</div>'
+        : '');
   };
 
   window._armoryGetPhoto = function(holderId) {
