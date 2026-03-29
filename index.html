@@ -195,41 +195,25 @@
   }
 
   function updateNav() {
-    // Active state on all nav-links
-    document.querySelectorAll('.nav-link,[data-nav]').forEach(el => {
-      const isActive = el.dataset.nav === activePage;
-      el.classList.toggle('text-primary', isActive);
-      el.classList.toggle('bg-primary-container/30', isActive);
-      if (!isActive) {
-        el.classList.remove('text-primary','bg-primary-container/30');
-        if (!el.classList.contains('text-on-surface-variant')) el.classList.add('text-on-surface/60');
-      }
-    });
-
     const isSoldier = currentRole === 'soldier';
 
-    // Desktop sidebar
-    const sidebarRasp = document.getElementById('sidebarRasp');
-    const sidebarSoldier = document.getElementById('sidebarSoldier');
-    if (sidebarRasp && sidebarSoldier) {
-      sidebarRasp.classList.toggle('hidden', isSoldier);
-      sidebarSoldier.classList.toggle('hidden', !isSoldier);
-      if (!isSoldier) sidebarRasp.classList.remove('hidden');
-      if (isSoldier) sidebarSoldier.classList.remove('hidden');
-    }
-
-    // Mobile nav
+    // Bottom nav visibility
     const raspNav = document.getElementById('raspNav');
     const soldierNav = document.getElementById('soldierNav');
-    if (raspNav && soldierNav) {
-      if (isSoldier) {
-        raspNav.style.display = 'none';
-        soldierNav.style.display = 'flex';
-      } else {
-        raspNav.style.display = 'flex';
-        soldierNav.style.display = 'none';
-      }
-    }
+    if (raspNav) raspNav.style.display = isSoldier ? 'none' : 'flex';
+    if (soldierNav) soldierNav.style.display = isSoldier ? 'flex' : 'none';
+
+    // Active state on bottom nav items
+    document.querySelectorAll('.bnav-item[data-nav]').forEach(el => {
+      const isActive = el.dataset.nav === activePage;
+      el.classList.toggle('nav-active', isActive);
+    });
+
+    // Active state on sidebar nav links  
+    document.querySelectorAll('.nav-link[data-nav]').forEach(el => {
+      const isActive = el.dataset.nav === activePage;
+      el.classList.toggle('text-primary', isActive);
+    });
   }
 
   window._nav = function(page) {
