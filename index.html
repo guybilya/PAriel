@@ -1744,7 +1744,7 @@
       <div id="armoryStats" class="grid grid-cols-3 gap-3"></div>
       <div class="flex gap-2 border-b border-outline-variant/30">
         ${Object.entries(ARMORY_CATS).map(([key,cat]) => {
-          return '<button onclick="window._armoryTab(\"' + key + '\")" data-acat="' + key + '" class="armory-tab px-5 py-3 font-semibold text-sm border-b-2 transition-all" style="border-color:transparent;color:#94a3b8">' + cat.label + '</button>';
+          return '<button data-acat="' + key + '" onclick="window._armoryTab(this.dataset.acat)" class="armory-tab px-5 py-3 font-semibold text-sm border-b-2 transition-all" style="border-color:transparent;color:#94a3b8">' + cat.label + '</button>';
         }).join('')}
       </div>
       <div id="armoryContent" class="space-y-2"></div>
@@ -1767,7 +1767,7 @@
       const wear = items.reduce((s,i)=>s+(i.wear||0),0);
       const issued = items.reduce((s,i)=>s+(i.issued||0),0);
       const total = good+wear+issued;
-      return '<div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm cursor-pointer hover:shadow-md transition-all" onclick="window._armoryTab(\'' + key + '\')">'
+      return '<div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm cursor-pointer hover:shadow-md transition-all" data-armcat="' + key + '" onclick="window._armoryTab(this.dataset.armcat)">'
         + '<div class="flex items-center gap-2 mb-3">'
         + '<span class="font-bold text-sm" style="color:'+cat.color+'">'+cat.label+'</span>'
         + '</div>'
@@ -1853,7 +1853,7 @@
         + statusBadge
         + holder
         + (currentRole === 'rasp'
-          ? '<button onclick="window._armoryAssign(''+cat+'',''+itemId+'')" class="text-xs px-2 py-1 rounded-lg border border-slate-200 text-slate-500 hover:border-primary hover:text-primary transition-colors ml-1">שייך</button>'
+          ? '<button data-cat="'+cat+'" data-item="'+itemId+'" onclick="window._armoryAssign(this.dataset.cat,this.dataset.item)" class="text-xs px-2 py-1 rounded-lg border border-slate-200 text-slate-500 hover:border-primary hover:text-primary transition-colors ml-1">שייך</button>'
           : '')
         + '</div>';
     }).join('');
