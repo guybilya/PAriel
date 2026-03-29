@@ -1808,17 +1808,6 @@
       return;
     }
 
-    // Stats row for this category
-    const total = entries.reduce((s,[,i]) => s+(i.good||0)+(i.wear||0)+(i.issued||0), 0);
-    const good = entries.reduce((s,[,i]) => s+(i.good||0), 0);
-    const wear = entries.reduce((s,[,i]) => s+(i.wear||0), 0);
-    const issued = entries.reduce((s,[,i]) => s+(i.issued||0), 0);
-
-    const statsHtml = '<div class="grid grid-cols-4 gap-3 mb-4">'
-      + [['סה"כ', total, '#64748b'], ['תקינה', good, '#10b981'], ['בלאי', wear, '#f59e0b'], ['מנופק', issued, catColor]]
-        .map(([l,v,col]) => '<div class="bg-white rounded-xl border border-slate-200 p-3 text-center shadow-sm"><p class="text-xs text-slate-400 mb-1">'+l+'</p><p class="text-xl font-bold" style="color:'+col+'">'+v+'</p></div>')
-        .join('') + '</div>';
-
     const rasOps = currentRole === 'rasp'
       ? '<div class="flex gap-2 mb-4">'
         + '<button onclick="window._armoryIssue(\'' + cat + '\')" class="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold text-white shadow-sm hover:opacity-90 transition-all" style="background:' + catColor + '"><span class="material-symbols-outlined text-sm">arrow_upward</span>ניפוק</button>'
