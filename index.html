@@ -841,7 +841,7 @@
           </div>
           <div>
             <p class="font-body font-bold">${op.itemName}</p>
-            <p class="font-label text-[10px] text-on-surface-variant uppercase">${op.sku} | ${op.soldier||op.by} | ${op.time} | ${op.cond||''}</p>
+            <p class="font-label text-[10px] text-on-surface-variant uppercase">${op.soldier||op.by} | ${op.time} | ${op.cond||''}</p>
           </div>
         </div>
         <span class="font-label text-[10px] px-2 py-1 bg-${typeColor[op.type]||'secondary'}/10 text-${typeColor[op.type]||'secondary'} border border-${typeColor[op.type]||'secondary'}/20 rounded-sm">${op.type}</span>
@@ -1013,7 +1013,7 @@
             </div>
             <div>
               <h3 class="font-medium text-sm text-on-surface">${op.itemName}</h3>
-              <p class="font-label text-[10px] text-on-surface-variant mt-0.5">מק"ט: ${op.sku}${soldierLabel} | ${op.cond||''} | ${op.time}</p>
+              <p class="font-label text-[10px] text-on-surface-variant mt-0.5">${soldierLabel ? soldierLabel.replace(' | ','') : ''} | ${op.cond||''} | ${op.time}</p>
             </div>
           </div>
           <span class="font-label text-[10px] px-2 py-1 bg-${color}/10 text-${color} border border-${color}/20 rounded-sm shrink-0">${op.type}</span>
@@ -1171,9 +1171,6 @@
         <input id="s_name" class="field-inp" placeholder="שם מלא" type="text"/>
         <input id="s_id" class="field-inp" placeholder="מספר אישי" type="text"/>
         <input id="s_phone" class="field-inp" placeholder="טלפון" type="text"/>
-        <select id="s_rank" class="field-inp">
-          <option>טוראי</option><option>רב"ט</option><option>סמל</option><option>רס"ל</option><option>רס"ן</option><option>סגן</option><option>סרן</option>
-        </select>
         <select id="s_role" class="field-inp">
           <option value="soldier">חייל</option>
           <option value="rasp">רס"פ</option>
@@ -1201,7 +1198,6 @@
     const name = document.getElementById('s_name').value.trim();
     const id = document.getElementById('s_id').value.trim();
     const phone = document.getElementById('s_phone').value.trim();
-    const rank = document.getElementById('s_rank').value;
     const role = document.getElementById('s_role').value;
     const email = document.getElementById('s_email').value.trim();
     const pass = document.getElementById('s_pass').value;
@@ -1225,7 +1221,7 @@
       } catch(e) { showToast('שגיאה ביצירת משתמש: ' + e.message, true); return; }
     }
     const sid = 's' + Date.now();
-    await set(ref(db, 'soldiers/' + sid), { name, id, phone, rank, role, status:'כשיר', items:[], email: email||'', photo: photoBase64 });
+    await set(ref(db, 'soldiers/' + sid), { name, id, phone, role, status:'כשיר', items:[], email: email||'', photo: photoBase64 });
     await set(ref(db, 'users/' + uid), { name, role, uid, soldierId: sid });
     closeModal();
     showToast('חייל נוסף בהצלחה ✓');
@@ -1258,11 +1254,7 @@
             <div><label class="field-lbl">שם מלא</label><input id="s_name_e" class="field-inp" value="${s.name}" type="text"/></div>
             <div><label class="field-lbl">מספר אישי</label><input id="s_id_e" class="field-inp" value="${s.id}" type="text"/></div>
             <div><label class="field-lbl">טלפון</label><input id="s_phone_e" class="field-inp" value="${s.phone||''}" type="text"/></div>
-            <div><label class="field-lbl">דרגה</label>
-              <select id="s_rank_e" class="field-inp">
-                ${['טוראי','רב"ט','סמל','רס"ל','רס"ן','סגן','סרן'].map(r => '<option ' + (s.rank===r?'selected':'') + '>' + r + '</option>').join('')}
-              </select>
-            </div>
+
             <div><label class="field-lbl">תפקיד</label>
               <select id="s_role_e" class="field-inp">
                 <option value="soldier" ${s.role==='soldier'?'selected':''}>חייל</option>
@@ -1312,7 +1304,6 @@
       name: document.getElementById('s_name_e').value,
       id: document.getElementById('s_id_e').value,
       phone: document.getElementById('s_phone_e').value,
-      rank: document.getElementById('s_rank_e').value,
       role: document.getElementById('s_role_e').value,
       status: document.getElementById('s_status_e').value,
       email: newEmail,
@@ -1680,7 +1671,7 @@
               </div>
               <div>
                 <h3 class="font-headline font-bold">${a.itemName}</h3>
-                <p class="font-label text-[10px] text-on-surface-variant uppercase mt-1">מק"ט: ${a.sku} | ${a.cond || ''} | ${a.time}</p>
+                <p class="font-label text-[10px] text-on-surface-variant uppercase mt-1">${a.cond || ''} | ${a.time}</p>
               </div>
             </div>
             <span class="font-label text-[10px] px-3 py-1 bg-${color}/10 text-${color} border border-${color}/20 rounded-sm">${a.type}</span>
@@ -1744,31 +1735,54 @@
 
   function renderArmory() {
     document.getElementById('mainContent').innerHTML = `
-    <div class="p-6 space-y-6 relative z-10">
+    <div class="p-6 space-y-5 relative z-10">
       <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-        <div class="flex items-center gap-3">
-          <span class="w-10 h-10 text-primary">${TZALM_SVG}</span>
-          <div>
-            <span class="font-label text-xs text-primary uppercase tracking-widest block mb-0.5">מחסן מיוחד</span>
-            <h1 class="font-headline text-4xl font-extrabold tracking-tighter text-on-surface">צל"מים</h1>
-          </div>
+        <div>
+          <span class="font-label text-xs text-primary uppercase tracking-widest block mb-0.5">מחסן מיוחד</span>
+          <h1 class="font-headline text-4xl font-extrabold tracking-tighter text-on-surface">מחסן צל"מים</h1>
         </div>
         ${currentRole === 'rasp' ? '<button onclick="window._openAddArmoryItem()" class="flex items-center gap-2 px-4 py-2.5 bg-primary text-on-primary rounded-lg font-semibold text-sm hover:opacity-90 transition-all shadow-sm"><span class="material-symbols-outlined text-sm">add</span> פריט חדש</button>' : ''}
       </div>
+
+      <!-- Stats cards -->
       <div id="armoryStats" class="grid grid-cols-3 gap-3"></div>
-      <div class="flex gap-2 border-b border-outline-variant/30">
-        ${Object.entries(ARMORY_CATS).map(([key,cat]) => {
-          return '<button data-acat="' + key + '" onclick="window._armoryTab(this.dataset.acat)" class="armory-tab px-5 py-3 font-semibold text-sm border-b-2 transition-all" style="border-color:transparent;color:#94a3b8">' + cat.label + '</button>';
-        }).join('')}
+
+      <!-- Filter tabs -->
+      <div class="flex gap-2 border-b border-slate-200">
+        <button data-acat="all" onclick="window._armoryTab('all')" class="armory-tab px-5 py-3 font-semibold text-sm border-b-2 transition-all" style="border-color:transparent;color:#94a3b8">הכל</button>
+        ${Object.entries(ARMORY_CATS).map(([key,cat]) =>
+          '<button data-acat="' + key + '" onclick="window._armoryTab(this.dataset.acat)" class="armory-tab px-5 py-3 font-semibold text-sm border-b-2 transition-all" style="border-color:transparent;color:#94a3b8">' + cat.label + '</button>'
+        ).join('')}
       </div>
-      <div id="armoryContent" class="space-y-2"></div>
+
+      <!-- Table -->
+      <div class="bg-surface-container rounded-sm overflow-hidden border border-white/5">
+        <div class="overflow-x-auto">
+          <table class="w-full text-right border-collapse">
+            <thead class="bg-surface-container-high sticky top-0 z-10">
+              <tr>
+                <th class="px-4 py-4 font-label text-[11px] text-on-surface-variant tracking-widest border-b border-white/10 uppercase">מס׳ סידורי</th>
+                <th class="px-4 py-4 font-label text-[11px] text-on-surface-variant tracking-widest border-b border-white/10 uppercase">שם / דגם</th>
+                <th class="px-4 py-4 font-label text-[11px] text-on-surface-variant tracking-widest border-b border-white/10 uppercase">קטגוריה</th>
+                <th class="px-4 py-4 font-label text-[11px] text-on-surface-variant tracking-widest border-b border-white/10 uppercase">מצב</th>
+                <th class="px-4 py-4 font-label text-[11px] text-on-surface-variant tracking-widest border-b border-white/10 uppercase">משויך ל</th>
+                ${currentRole === 'rasp' ? '<th class="px-4 py-4 font-label text-[11px] text-on-surface-variant tracking-widest border-b border-white/10 uppercase">פעולות</th>' : ''}
+              </tr>
+            </thead>
+            <tbody id="armoryTableBody" class="divide-y divide-white/5"></tbody>
+          </table>
+        </div>
+        <div class="px-6 py-3 bg-surface-container-high flex justify-between items-center border-t border-white/10">
+          <span id="armoryCount" class="font-label text-[10px] text-on-surface-variant uppercase tracking-widest">טוען...</span>
+        </div>
+      </div>
     </div>`;
 
-    window._activeArmoryTab = 'cameras';
+    window._activeArmoryTab = 'all';
     onValue(ref(db, 'armory'), snap => {
       window._armoryData = snap.val() || {};
       _armoryDrawStats(window._armoryData);
-      _armoryTab(window._activeArmoryTab);
+      _armoryRenderTable(window._activeArmoryTab);
     });
   }
 
@@ -1776,109 +1790,93 @@
     const el = document.getElementById('armoryStats');
     if (!el) return;
     el.innerHTML = Object.entries(ARMORY_CATS).map(([key, cat]) => {
-      const items = Object.values(data[key] || {});
-      const good = items.reduce((s,i)=>s+(i.good||0),0);
-      const wear = items.reduce((s,i)=>s+(i.wear||0),0);
-      const issued = items.reduce((s,i)=>s+(i.issued||0),0);
-      const total = good+wear+issued;
-      return '<div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm cursor-pointer hover:shadow-md transition-all" data-armcat="' + key + '" onclick="window._armoryTab(this.dataset.armcat)">'
-        + '<div class="flex items-center gap-2 mb-3">'
-        + '<span class="font-bold text-sm" style="color:'+cat.color+'">'+cat.label+'</span>'
+      const items = Object.values(data[key] || {}).filter(i => i.name && i.name !== 'undefined');
+      const total = items.length;
+      const issued = items.filter(i => i.holderId).length;
+      const free = total - issued;
+      return '<div class="bg-surface-container-low p-4 rounded-sm cursor-pointer hover:bg-surface-variant/30 transition-all border-r-2" style="border-color:' + cat.color + '" data-armcat="' + key + '" onclick="window._armoryTab(this.dataset.armcat)">'
+        + '<span class="font-label text-[10px] uppercase tracking-widest block mb-1" style="color:' + cat.color + '">' + cat.label + '</span>'
+        + '<div class="text-2xl font-headline font-bold text-on-surface mb-2">' + total + '</div>'
+        + '<div class="flex gap-3 text-xs">'
+        + '<span class="text-emerald-500 font-semibold">פנוי: ' + free + '</span>'
+        + '<span style="color:' + cat.color + '" class="font-semibold">מנופק: ' + issued + '</span>'
         + '</div>'
-        + '<div class="grid grid-cols-3 gap-2 text-center">'
-        + '<div><p class="text-xs text-slate-400">תקינה</p><p class="font-bold text-emerald-600">'+good+'</p></div>'
-        + '<div><p class="text-xs text-slate-400">בלאי</p><p class="font-bold text-amber-500">'+wear+'</p></div>'
-        + '<div><p class="text-xs text-slate-400">מנופק</p><p class="font-bold" style="color:'+cat.color+'">'+issued+'</p></div>'
-        + '</div></div>';
+        + '</div>';
     }).join('');
+  };
+
+  window._armoryRenderTable = function(filterCat) {
+    const tbody = document.getElementById('armoryTableBody');
+    const countEl = document.getElementById('armoryCount');
+    if (!tbody) return;
+    const data = window._armoryData || {};
+    const allSoldiers = window._soldiersData || {};
+
+    // Build flat list of all items
+    const rows = [];
+    Object.entries(data).forEach(([cat, items]) => {
+      if (filterCat !== 'all' && filterCat !== cat) return;
+      Object.entries(items || {}).forEach(([itemId, item]) => {
+        if (!item.name || item.name === 'undefined') return;
+        rows.push({ cat, itemId, ...item });
+      });
+    });
+
+    if (!rows.length) {
+      tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-on-surface-variant text-sm">אין פריטים</td></tr>';
+      if (countEl) countEl.textContent = '0 פריטים';
+      return;
+    }
+
+    const catColor = (cat) => ARMORY_CATS[cat]?.color || '#6366f1';
+    const catLabel = (cat) => ARMORY_CATS[cat]?.label || cat;
+
+    tbody.innerHTML = rows.map(row => {
+      const isIssued = !!row.holderId;
+      const holderInfo = isIssued
+        ? '<div class="flex items-center gap-2">'
+          + (allSoldiers[row.holderId]?.photo ? '<img src="' + allSoldiers[row.holderId].photo + '" class="w-6 h-6 rounded-full object-cover border border-white/10"/>' : '<span class="material-symbols-outlined text-on-surface-variant/40 text-sm">person</span>')
+          + '<span class="text-sm font-medium text-on-surface">' + (row.holderName || '') + '</span>'
+          + '</div>'
+        : '<span class="text-on-surface-variant/40 text-sm">—</span>';
+      const statusBadge = (row.status === 'תקין' || !row.status)
+        ? '<span class="bg-primary/10 text-primary px-2 py-0.5 text-[10px] font-bold rounded-sm border border-primary/20">תקין</span>'
+        : '<span class="bg-tertiary/10 text-tertiary px-2 py-0.5 text-[10px] font-bold rounded-sm border border-tertiary/20">בלאי</span>';
+      const catBadge = '<span class="px-2 py-0.5 text-[10px] font-bold rounded-sm border" style="background:' + catColor(row.cat) + '15;color:' + catColor(row.cat) + ';border-color:' + catColor(row.cat) + '30">' + catLabel(row.cat) + '</span>';
+      const actions = currentRole === 'rasp'
+        ? '<div class="flex gap-1.5">'
+          + (isIssued
+            ? '<button data-cat="' + row.cat + '" data-item="' + row.itemId + '" onclick="window._armoryRelease(this.dataset.cat,this.dataset.item)" class="font-label text-[10px] px-2 py-1 rounded-sm border border-error/20 text-error/70 hover:bg-error/10 transition-all uppercase tracking-wider">שחרר</button>'
+            : '<button data-cat="' + row.cat + '" data-item="' + row.itemId + '" onclick="window._armoryAssign(this.dataset.cat,this.dataset.item)" class="font-label text-[10px] px-2 py-1 rounded-sm border border-primary/20 text-primary hover:bg-primary/10 transition-all uppercase tracking-wider">שייך</button>')
+          + '<button data-cat="' + row.cat + '" data-item="' + row.itemId + '" onclick="window._armoryDelete(this.dataset.cat,this.dataset.item)" class="material-symbols-outlined text-on-surface-variant/40 hover:text-error transition-colors text-sm">delete</button>'
+          + '</div>'
+        : '';
+
+      return '<tr class="hover:bg-white/5 transition-colors group">'
+        + '<td class="px-4 py-3 font-mono text-xs text-primary">' + row.itemId + '</td>'
+        + '<td class="px-4 py-3 font-medium text-sm text-on-surface">' + row.name + '</td>'
+        + '<td class="px-4 py-3">' + catBadge + '</td>'
+        + '<td class="px-4 py-3">' + statusBadge + '</td>'
+        + '<td class="px-4 py-3">' + holderInfo + '</td>'
+        + (currentRole === 'rasp' ? '<td class="px-4 py-3">' + actions + '</td>' : '')
+        + '</tr>';
+    }).join('');
+
+    if (countEl) countEl.textContent = 'מציג ' + rows.length + ' פריטים';
   };
 
   window._armoryTab = function(cat) {
     window._activeArmoryTab = cat;
-    const catColor = ARMORY_CATS[cat]?.color || '#6366f1';
+    // Update tab highlight
     document.querySelectorAll('.armory-tab').forEach(b => {
       const isActive = b.dataset.acat === cat;
-      const col = ARMORY_CATS[b.dataset.acat]?.color || '#6366f1';
+      const col = b.dataset.acat === 'all' ? '#059669' : (ARMORY_CATS[b.dataset.acat]?.color || '#6366f1');
       b.style.borderColor = isActive ? col : 'transparent';
       b.style.color = isActive ? col : '#94a3b8';
       b.style.fontWeight = isActive ? '700' : '500';
     });
+    _armoryRenderTable(cat);
 
-    const data = window._armoryData?.[cat] || {};
-    const el = document.getElementById('armoryContent');
-    if (!el) return;
-    const entries = Object.entries(data);
-    if (!entries.length) {
-      el.innerHTML = '<p class="text-center py-8 text-slate-400">אין פריטים בקטגוריה זו</p>';
-      return;
-    }
-
-    const rasOps = currentRole === 'rasp'
-      ? '<div class="flex gap-2 mb-4">'
-        + '<button onclick="window._armoryIssue(\'' + cat + '\')" class="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold text-white shadow-sm hover:opacity-90 transition-all" style="background:' + catColor + '"><span class="material-symbols-outlined text-sm">arrow_upward</span>ניפוק</button>'
-        + '<button onclick="window._armoryReturn(\'' + cat + '\')" class="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold bg-white border-2 border-slate-200 text-slate-600 hover:border-emerald-400 hover:text-emerald-600 transition-all"><span class="material-symbols-outlined text-sm">arrow_downward</span>זיכוי</button>'
-        + '</div>'
-      : '';
-
-    // Holders list — soldiers who have items from this category
-    const allSoldiers = window._soldiersData || {};
-    // Build holder map from armory data
-    const holdersList = [];
-    entries.forEach(([itemId, item]) => {
-      if (item.holderId) holdersList.push({ itemId, item });
-    });
-
-    const holdersHtml = holdersList.length === 0
-      ? '<p class="text-center py-4 text-slate-400 text-sm">אין ציוד מנופק כרגע</p>'
-      : holdersList.map(({itemId, item}) => {
-          const s = allSoldiers[item.holderId] || {};
-          const photo = s.photo ? '<img src="'+s.photo+'" class="w-full h-full object-cover"/>' : '<span class="material-symbols-outlined text-slate-300">person</span>';
-          return '<div class="flex items-center gap-3 py-2.5 border-b border-slate-100 last:border-0">'
-            + '<div class="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 overflow-hidden flex items-center justify-center shrink-0">'+photo+'</div>'
-            + '<div class="flex-1 min-w-0"><p class="font-semibold text-sm text-slate-800">'+item.holderName+'</p><p class="text-xs text-slate-400">'+(s.rank||'')+' · '+(s.id||'')+'</p></div>'
-            + '<span class="font-mono text-xs text-slate-400 shrink-0">'+itemId+'</span>'
-            + '</div>';
-        }).join('');
-
-    // Items list — all items in this category
-    const itemsHtml = entries.filter(([itemId, item]) => item.name && item.name !== 'undefined').map(([itemId, item]) => {
-      const isIssued = !!item.holderId;
-      const holderBadge = isIssued
-        ? '<span class="text-xs font-semibold px-2 py-0.5 rounded-full shrink-0" style="background:'+catColor+'22;color:'+catColor+'">'+item.holderName+'</span>'
-        : '<span class="text-xs text-slate-400 shrink-0">פנוי</span>';
-      const statusBadge = (item.status === 'תקין' || !item.status)
-        ? '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-600 border border-emerald-200 shrink-0">תקין</span>'
-        : '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-50 text-amber-600 border border-amber-200 shrink-0">בלאי</span>';
-      const assignBtn = currentRole === 'rasp'
-        ? (isIssued
-          ? '<button data-cat="'+cat+'" data-item="'+itemId+'" onclick="window._armoryUnassign(this.dataset.cat,this.dataset.item)" class="text-[11px] px-2 py-1 rounded-lg border border-red-200 text-red-400 hover:bg-red-50 transition-colors shrink-0">שחרר</button>'
-          : '<button data-cat="'+cat+'" data-item="'+itemId+'" onclick="window._armoryAssign(this.dataset.cat,this.dataset.item)" class="text-[11px] px-2 py-1 rounded-lg border border-slate-200 text-slate-500 hover:border-primary hover:text-primary transition-colors shrink-0">שייך</button>')
-        : '';
-      return '<div class="flex items-center gap-2 py-3 border-b border-slate-100 last:border-0 hover:bg-slate-50/70 transition-colors px-4">'
-        + '<div class="flex-1 min-w-0">'
-        + '<p class="font-semibold text-sm text-slate-800 truncate">'+(item.name||itemId)+'</p>'
-        + '<p class="font-mono text-xs text-slate-400">'+itemId+'</p>'
-        + '</div>'
-        + '<div class="flex items-center gap-2 shrink-0">'
-        + statusBadge + holderBadge + assignBtn
-        + '</div>'
-        + '</div>';
-    }).join('');
-
-    el.innerHTML = rasOps
-      + '<div class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm mb-3">'
-      + '<div class="px-4 py-3 border-b border-slate-100 flex items-center justify-between">'
-      + '<p class="font-semibold text-sm text-slate-700">פריטים בקטגוריה</p>'
-      + '<span class="px-2 py-0.5 rounded-full text-xs font-bold" style="background:'+catColor+'22;color:'+catColor+'">'+entries.length+'</span>'
-      + '</div>'
-      + '<div>' + itemsHtml + '</div>'
-      + '</div>'
-      + (holdersList.length > 0
-        ? '<div class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">'
-          + '<div class="px-4 py-3 border-b border-slate-100"><p class="font-semibold text-sm text-slate-700">חיילים חתומים ('+holdersList.length+')</p></div>'
-          + '<div class="px-4 py-1">' + holdersHtml + '</div>'
-          + '</div>'
-        : '');
   };
 
   window._armoryUnassign = async function(cat, itemId) {
@@ -2043,6 +2041,26 @@
     }
   };
 
+  window._armoryDelete = async function(cat, itemId) {
+    if (!confirm('למחוק פריט זה לגמרי?')) return;
+    const snap = await get(ref(db, 'armory/' + cat + '/' + itemId));
+    const item = snap.val();
+    // Remove from soldier if assigned
+    if (item?.holderId) {
+      const sSnap = await get(ref(db, 'soldiers/' + item.holderId));
+      if (sSnap.exists()) {
+        const sol = sSnap.val();
+        await update(ref(db, 'soldiers/' + item.holderId), { items: (sol.items||[]).filter(i => i !== cat+'_'+itemId) });
+      }
+    }
+    await remove(ref(db, 'armory/' + cat + '/' + itemId));
+    showToast('פריט נמחק ✓');
+    const freshSnap = await get(ref(db, 'armory'));
+    window._armoryData = freshSnap.val() || {};
+    _armoryDrawStats(window._armoryData);
+    _armoryRenderTable(window._activeArmoryTab);
+  };
+
   window._armoryRelease = async function(cat, itemId) {
     const item = window._armoryData?.[cat]?.[itemId];
     if (!item) return;
@@ -2105,7 +2123,7 @@
     if (freshSnap.exists()) {
       window._armoryData = freshSnap.val();
       _armoryDrawStats(window._armoryData);
-      _armoryTab(cat);
+      _armoryRenderTable(window._activeArmoryTab || 'all');
     }
   };
 
