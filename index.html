@@ -68,75 +68,7 @@
 
   // ── Seed demo data if empty ──────────────────────────────────
   async function seedIfEmpty() {
-    const snap = await get(ref(db, 'inventory/warehouse_a'));
-    if (snap.exists()) return;
-
-    const demoInventory = {
-      warehouse_a: {
-        "820-09-122": { name:"אפוד קרמי דור 4 - רמה 3+", good:120, wear:14, issued:85, status:"תקין" },
-        "105-44-678": { name:"מחסנית M16 סטנדרטית 30 כדור", good:42, wear:201, issued:1400, status:"קריטי" },
-        "551-30-002": { name:"ערכת עזרה ראשונה פלוגתית תקנית", good:12, wear:2, issued:8, status:"בינוני" },
-        "909-12-334": { name:"קסדת טקטי-פרו פחמן שחור", good:88, wear:5, issued:40, status:"תקין" },
-        "441-88-219": { name:"משקפת לילה דור 3 - פנורמי", good:4, wear:8, issued:12, status:"קריטי" },
-        "210-55-901": { name:"תיק גב 90 ליטר - הסוואה מדברית", good:250, wear:32, issued:410, status:"תקין" }
-      },
-      warehouse_b: {
-        "821-00452-X": { name:"ערכת עזרה ראשונה פלוגתית", good:140, wear:4, issued:12, status:"תקין" },
-        "550-99120-A": { name:"מחסנית 5.56 משופרת", good:45, wear:12, issued:80, status:"בינוני" },
-        "102-33491-K": { name:"סוללה למכשיר קשר 710", good:8, wear:2, issued:15, status:"קריטי" },
-        "900-11200-Z": { name:"אפוד קרמי דור ג'", good:85, wear:1, issued:30, status:"תקין" },
-        "334-88219-M": { name:"פנס ראש טקטי LED", good:212, wear:14, issued:45, status:"תקין" }
-      },
-      warehouse_donations: {
-        "TR-4029-X": { name:"ערכות עזרה ראשונה טקטיות - רמה 2", good:450, wear:2, issued:120, status:"תקין" },
-        "TR-8812-A": { name:"אפודי קרמיקה - דגם קומנדו", good:85, wear:0, issued:210, status:"בינוני" },
-        "TR-1102-M": { name:"מנות קרב (MRE) - תפריט טבעוני", good:1200, wear:14, issued:4500, status:"תקין" },
-        "TR-5541-Q": { name:"פנסי ראש עוצמתיים - נטענים", good:5, wear:12, issued:180, status:"קריטי" },
-        "TR-9903-V": { name:"ברכיות ומיגון מפרקים - זוג", good:240, wear:0, issued:65, status:"תקין" }
-      }
-    };
-    await set(ref(db, 'inventory'), demoInventory);
-
-    const demoSoldiers = {
-      "s001": { name:"רס״ן אביב ישראלי", id:"8294401", phone:"050-1234567", rank:"רס״ן", status:"כשיר", items:["820-09-122","909-12-334","551-30-002"], role:"rasp" },
-      "s002": { name:"סמל נועה כהן", id:"9112034", phone:"052-9876543", rank:"סמל", status:"חסר ציוד", items:["821-00452-X"], role:"soldier" },
-      "s003": { name:"סגן גיא מנור", id:"7750122", phone:"054-5556677", rank:"סגן", status:"כשיר", items:["820-09-122","441-88-219"], role:"soldier" }
-    };
-    await set(ref(db, 'soldiers'), demoSoldiers);
-
-    const demoRequests = {
-      "r001": { soldierName:"יוסי אברהם", soldierId:"827361", text:"צריך החלפה של ברכיות טקטיות. הקיימות קרועות לגמרי.", time:"14:20 | 22/10", status:"open" },
-      "r002": { soldierName:"איתי לוין", soldierId:"991204", text:"בקשה למטען נייד נוסף עבור צוות סיור ג'.", time:"12:05 | 22/10", status:"open" },
-      "r003": { soldierName:"רון כהן", soldierId:"554123", text:"תיקון רצועה בנשק האישי. הרצועה נפרמה בחיבור האחורי.", time:"18:30 | 21/10", status:"done" },
-      "r004": { soldierName:"נדב שפירא", soldierId:"442998", text:"צריך חידוש של ערכת עזרה ראשונה אישית. פג תוקף חלק מהפריטים.", time:"10:45 | 22/10", status:"open" }
-    };
-    await set(ref(db, 'requests'), demoRequests);
-
-    // armory seed
-    await set(ref(db, 'armory'), {
-      cameras: {
-        'cameras_stock': { name:'צל"מים', good:15, wear:3, issued:7, holderId:null, holderName:null },
-        'CAM-001': { name:'Canon EOS R5', good:0, wear:0, issued:0, holderId:null, holderName:null },
-        'CAM-002': { name:'Nikon Z6 II', good:0, wear:0, issued:0, holderId:null, holderName:null },
-      },
-      weapons: {
-        'weapons_stock': { name:'נשקים', good:42, wear:5, issued:3, holderId:null, holderName:null },
-        'WPN-001': { name:'M16A1', good:0, wear:0, issued:0, holderId:null, holderName:null },
-        'WPN-002': { name:'M4', good:0, wear:0, issued:0, holderId:null, holderName:null },
-      },
-      machleons: {
-        'machleons_stock': { name:'מקלעים', good:8, wear:1, issued:1, holderId:null, holderName:null },
-        'MCH-001': { name:'נגב', good:0, wear:0, issued:0, holderId:null, holderName:null },
-      }
-    });
-
-    // demo users
-    const demoUsers = {
-      "demo_rasp": { name:"מנהל מחסן", role:"rasp", uid:"demo_rasp" },
-      "demo_soldier": { name:"חייל לדוגמה", role:"soldier", uid:"demo_soldier", soldierId:"s002" }
-    };
-    await set(ref(db, 'users'), demoUsers);
-
+    // No demo data — system starts empty
   }
 
   // ── AUTH ──────────────────────────────────────────────────────
@@ -2322,6 +2254,8 @@
     await remove(ref(db, 'activity'));
     await remove(ref(db, 'requests'));
     await remove(ref(db, 'armory'));
+    await remove(ref(db, 'soldiers'));
+    // ⚠️ Do NOT remove 'users' — it contains login data!
     showToast('כל הנתונים נמחקו ✓');
     setTimeout(() => location.reload(), 1500);
   };
