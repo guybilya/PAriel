@@ -2266,6 +2266,43 @@
   // ── ARMORY ───────────────────────────────────────────────────
 
 
+  window._resetAllData = function() {
+    showModal('איפוס מסד נתונים', `
+      <div class="space-y-4">
+        <div class="flex items-center gap-3 p-3 bg-red-50 rounded-xl border border-red-200">
+          <span class="material-symbols-outlined text-red-500 text-2xl shrink-0">warning</span>
+          <p class="text-sm text-red-700 font-semibold">פעולה זו תמחק את כל המלאי, ההיסטוריה, הבקשות והצל"מים. אין דרך חזרה!</p>
+        </div>
+        <div>
+          <label class="field-lbl">סיסמת אישור</label>
+          <input id="resetPass" class="field-inp" type="password" placeholder="הזן סיסמה לאישור" onkeydown="if(event.key==='Enter')window._confirmReset()"/>
+          <p id="resetErr" class="text-xs text-red-500 mt-1 min-h-[16px]"></p>
+        </div>
+      </div>`,
+      '<button onclick="closeModal()" class="btn-cancel">ביטול</button>' +
+      '<button onclick="window._confirmReset()" class="btn-delete">מחק הכל</button>'
+    );
+    setTimeout(() => document.getElementById('resetPass')?.focus(), 150);
+  };
+
+  window._confirmReset = async function() {
+    const pass = document.getElementById('resetPass')?.value;
+    const err = document.getElementById('resetErr');
+    if (pass !== '102030') {
+      if (err) err.textContent = 'סיסמה שגויה ✗';
+      const inp = document.getElementById('resetPass');
+      if (inp) { inp.classList.add('border-red-400'); inp.value = ''; inp.focus(); }
+      return;
+    }
+    closeModal();
+    await remove(ref(db, 'inventory'));
+    await remove(ref(db, 'activity'));
+    await remove(ref(db, 'requests'));
+    await remove(ref(db, 'armory'));
+    showToast('כל הנתונים נמחקו ✓');
+    setTimeout(() => location.reload(), 1500);
+  };
+
   // Init
   seedIfEmpty().catch(console.error);
 </script>
@@ -2491,6 +2528,10 @@ tailwind.config = {
       <button onclick="window._logout()" class="font-label text-xs text-on-surface-variant hover:text-error transition-colors px-3 py-2 flex items-center gap-1">
         <span class="material-symbols-outlined text-sm">logout</span>
         <span class="hidden md:inline">יציאה</span>
+      </button>
+      <button id="resetBtn" onclick="window._resetAllData()" class="hidden font-label text-xs text-error/60 hover:text-error transition-colors px-3 py-2 flex items-center gap-1 border border-error/20 rounded-sm hover:bg-error/5">
+        <span class="material-symbols-outlined text-sm">delete_sweep</span>
+        <span class="hidden md:inline">איפוס נתונים</span>
       </button>
       <button class="md:hidden material-symbols-outlined text-on-surface/80 hover:bg-white/5 p-2 transition-colors" onclick="document.getElementById('mobileMenu').classList.toggle('translate-y-0')">menu</button>
     </div>
