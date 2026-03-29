@@ -71,12 +71,16 @@
         const data = snap.val();
         currentUser = { ...data, uid: user.uid };
         currentRole = data.role;
-        currentSoldierId = data.soldierId || null;
+        currentSoldierId = (data.soldierId && data.soldierId !== "") ? data.soldierId : null;
         // Set correct starting page BEFORE showApp
         activePage = (currentRole === 'soldier') ? 'my_gear' : 'warehouse_a';
         dbg('נכנס בהצלחה! עובר למערכת... role=' + currentRole);
         showApp();
-        loadCurrentPage();
+        // Small delay to ensure DOM is fully rendered before nav update
+        setTimeout(() => {
+          updateNav();
+          loadCurrentPage();
+        }, 50);
       } else {
         dbg('שגיאה: משתמש לא נמצא ב-Database (uid: ' + user.uid + ')');
         showLogin();
@@ -185,8 +189,7 @@
       const el = document.getElementById(id);
       if (el && currentRole === 'rasp') el.classList.remove('hidden');
     });
-    // activePage already set in auth handler
-    updateNav();
+    // nav updated in setTimeout after DOM ready
   }
   function showLogin() {
     const ls = document.getElementById('loginScreen');
