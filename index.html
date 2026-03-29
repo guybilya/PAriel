@@ -111,20 +111,16 @@
     const emailRow = document.getElementById('loginEmailRow');
     const tabId = document.getElementById('loginTabId');
     const tabEmail = document.getElementById('loginTabEmail');
-    if (tabId) { tabId.style.background = tab==='id' ? '#1a73e8' : 'transparent'; tabId.style.color = tab==='id' ? 'white' : '#8a97a8'; }
-    if (tabEmail) { tabEmail.style.background = tab==='email' ? '#1a73e8' : 'transparent'; tabEmail.style.color = tab==='email' ? 'white' : '#8a97a8'; }
-    const tabId = document.getElementById('loginTabId');
-    const tabEmail = document.getElementById('loginTabEmail');
     if (tab === 'id') {
-      idRow.style.display = 'block';
-      emailRow.style.display = 'none';
-      tabId.style.background = '#059669'; tabId.style.color = 'white';
-      tabEmail.style.background = 'transparent'; tabEmail.style.color = '#64748b';
+      if (idRow) idRow.style.display = 'block';
+      if (emailRow) emailRow.style.display = 'none';
+      if (tabId) { tabId.style.background = '#1a73e8'; tabId.style.color = 'white'; }
+      if (tabEmail) { tabEmail.style.background = 'transparent'; tabEmail.style.color = '#8a97a8'; }
     } else {
-      idRow.style.display = 'none';
-      emailRow.style.display = 'block';
-      tabEmail.style.background = '#059669'; tabEmail.style.color = 'white';
-      tabId.style.background = 'transparent'; tabId.style.color = '#64748b';
+      if (idRow) idRow.style.display = 'none';
+      if (emailRow) emailRow.style.display = 'block';
+      if (tabEmail) { tabEmail.style.background = '#1a73e8'; tabEmail.style.color = 'white'; }
+      if (tabId) { tabId.style.background = 'transparent'; tabId.style.color = '#8a97a8'; }
     }
   };
 
