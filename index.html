@@ -11,27 +11,8 @@
 <!-- Stub functions — מוגדרות מיד כדי שה-onclick יעבוד לפני טעינת ה-module -->
 <script>
   window._loginTab = 'id';
-  window._setLoginTab = function(tab) {
-    window._loginTab = tab;
-    var idRow = document.getElementById('loginIdRow');
-    var emailRow = document.getElementById('loginEmailRow');
-    var tabId = document.getElementById('loginTabId');
-    var tabEmail = document.getElementById('loginTabEmail');
-    if (!idRow) return;
-    if (tab === 'id') {
-      idRow.style.display = 'block'; emailRow.style.display = 'none';
-      tabId.style.background = '#059669'; tabId.style.color = 'white';
-      tabEmail.style.background = 'transparent'; tabEmail.style.color = '#64748b';
-    } else {
-      idRow.style.display = 'none'; emailRow.style.display = 'block';
-      tabEmail.style.background = '#059669'; tabEmail.style.color = 'white';
-      tabId.style.background = 'transparent'; tabId.style.color = '#64748b';
-    }
-  };
-  window._login = function() {
-    var err = document.getElementById('loginError');
-    if (err) err.textContent = 'המערכת עדיין טוענת, אנא המתן...';
-  };
+  // _setLoginTab defined below
+  // _login defined below
   window._logout = function() {};
   window._nav = function() {};
 </script>
