@@ -2595,20 +2595,23 @@ body {
   z-index: 50;
   background: #ffffff;
   border-top: 1px solid #e5e9f0;
+  display: flex;
   flex-direction: row-reverse;
+  flex-wrap: nowrap;
   justify-content: space-around;
   align-items: center;
-  padding: 6px 2px env(safe-area-inset-bottom, 6px);
+  padding: 4px 0;
+  height: 58px;
   box-shadow: 0 -2px 12px rgba(0,0,0,0.08);
 }
 .bnav-item {
   display: flex; flex-direction: column;
-  align-items: center; gap: 2px;
-  padding: 6px 4px;
-  border-radius: 10px;
+  align-items: center; gap: 1px;
+  padding: 4px 2px;
   cursor: pointer;
   transition: all .15s;
   flex: 1;
+  min-width: 0;
   color: #9aa5b4;
   text-decoration: none;
   position: relative;
@@ -2624,8 +2627,8 @@ body {
   background: #1a73e8;
   border-radius: 0 0 3px 3px;
 }
-.bnav-icon { font-size: 22px !important; }
-.bnav-label { font-size: 9px; font-weight: 700; letter-spacing: .02em; }
+.bnav-icon { font-size: 20px !important; }
+.bnav-label { font-size: 8px; font-weight: 700; letter-spacing: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 
 /* Main content bg */
 #mainContent {
