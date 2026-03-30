@@ -194,23 +194,36 @@
 
   function updateNav() {
     const isSoldier = currentRole === 'soldier';
+    const nav = document.getElementById('mainNav');
+    if (!nav) return;
 
-    // Bottom nav visibility
-    const raspNav = document.getElementById('raspNav');
-    const soldierNav = document.getElementById('soldierNav');
-    if (raspNav) raspNav.style.display = isSoldier ? 'none' : 'flex';
-    if (soldierNav) soldierNav.style.display = isSoldier ? 'flex' : 'none';
+    const raspItems = [
+      {p:'warehouse_a', i:'inventory_2', l:'מחסן א׳'},
+      {p:'warehouse_b', i:'warehouse', l:'מחסן ב׳'},
+      {p:'warehouse_donations', i:'volunteer_activism', l:'תרומות'},
+      {p:'register', i:'assignment', l:'רישום'},
+      {p:'history', i:'history', l:'היסטוריה'},
+      {p:'soldiers', i:'groups', l:'חיילים'},
+      {p:'requests', i:'reorder', l:'בקשות'},
+      {p:'armory', i:'photo_camera', l:'צל"מים'},
+    ];
+    const soldierItems = [
+      {p:'my_gear', i:'inventory_2', l:'הציוד שלי'},
+      {p:'my_history', i:'history', l:'היסטוריה'},
+      {p:'my_requests', i:'reorder', l:'בקשות'},
+    ];
 
-    // Active state on bottom nav items
-    document.querySelectorAll('.bnav-item[data-nav]').forEach(el => {
-      const isActive = el.dataset.nav === activePage;
-      el.classList.toggle('nav-active', isActive);
-    });
+    const items = isSoldier ? soldierItems : raspItems;
+    nav.innerHTML = items.map(({p, i, l}) =>
+      `<a data-nav="${p}" onclick="window._nav('${p}')" class="bnav-item${activePage===p?' nav-active':''}">
+        <span class="material-symbols-outlined bnav-icon">${i}</span>
+        <span class="bnav-label">${l}</span>
+      </a>`
+    ).join('');
 
     // Active state on sidebar nav links  
     document.querySelectorAll('.nav-link[data-nav]').forEach(el => {
-      const isActive = el.dataset.nav === activePage;
-      el.classList.toggle('text-primary', isActive);
+      el.classList.toggle('text-primary', el.dataset.nav === activePage);
     });
   }
 
@@ -2582,7 +2595,6 @@ body {
   z-index: 50;
   background: #ffffff;
   border-top: 1px solid #e5e9f0;
-  display: flex !important;
   flex-direction: row-reverse;
   justify-content: space-around;
   align-items: center;
@@ -2844,58 +2856,9 @@ tr:hover td { background: #f5f8ff !important; }
   <main id="mainContent" class="flex-1 overflow-y-auto" style="padding-bottom:80px;background:#111318"></main>
 
   <!-- BOTTOM NAV rasp -->
-  <nav id="raspNav" class="bottom-nav" style="display:none">
-    <a data-nav="warehouse_a" onclick="window._nav('warehouse_a')" class="bnav-item">
-      <span class="material-symbols-outlined bnav-icon">inventory_2</span>
-      <span class="bnav-label">מחסן א׳</span>
-    </a>
-    <a data-nav="warehouse_b" onclick="window._nav('warehouse_b')" class="bnav-item">
-      <span class="material-symbols-outlined bnav-icon">warehouse</span>
-      <span class="bnav-label">מחסן ב׳</span>
-    </a>
-    <a data-nav="warehouse_donations" onclick="window._nav('warehouse_donations')" class="bnav-item">
-      <span class="material-symbols-outlined bnav-icon">volunteer_activism</span>
-      <span class="bnav-label">תרומות</span>
-    </a>
-    <a data-nav="register" onclick="window._nav('register')" class="bnav-item">
-      <span class="material-symbols-outlined bnav-icon">assignment</span>
-      <span class="bnav-label">רישום</span>
-    </a>
-    <a data-nav="history" onclick="window._nav('history')" class="bnav-item">
-      <span class="material-symbols-outlined bnav-icon">history</span>
-      <span class="bnav-label">היסטוריה</span>
-    </a>
-    <a data-nav="soldiers" onclick="window._nav('soldiers')" class="bnav-item">
-      <span class="material-symbols-outlined bnav-icon">groups</span>
-      <span class="bnav-label">חיילים</span>
-    </a>
-    <a data-nav="requests" onclick="window._nav('requests')" class="bnav-item">
-      <span class="material-symbols-outlined bnav-icon">reorder</span>
-      <span class="bnav-label">בקשות</span>
-    </a>
-    <a data-nav="armory" onclick="window._nav('armory')" class="bnav-item">
-      <span class="material-symbols-outlined bnav-icon">photo_camera</span>
-      <span class="bnav-label">צל"מים</span>
-    </a>
-  </nav>
+  <nav id="mainNav" class="bottom-nav"></nav>
 
-  <!-- BOTTOM NAV soldier -->
-  <nav id="soldierNav" class="bottom-nav" style="display:none">
-    <a data-nav="my_gear" onclick="window._nav('my_gear')" class="bnav-item">
-      <span class="material-symbols-outlined bnav-icon">inventory_2</span>
-      <span class="bnav-label">הציוד שלי</span>
-    </a>
-    <a data-nav="my_history" onclick="window._nav('my_history')" class="bnav-item">
-      <span class="material-symbols-outlined bnav-icon">history</span>
-      <span class="bnav-label">היסטוריה</span>
-    </a>
-    <a data-nav="my_requests" onclick="window._nav('my_requests')" class="bnav-item">
-      <span class="material-symbols-outlined bnav-icon">reorder</span>
-      <span class="bnav-label">בקשות</span>
-    </a>
-  </nav>
-
-  <div id="resetBtnSide" style="display:none"></div>
+    <div id="resetBtnSide" style="display:none"></div>
 </div>
 
 <!-- ═══════════════════════ LOGIN SCREEN ═══════════════════════ -->
