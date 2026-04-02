@@ -85,27 +85,9 @@
     }
   });
 
-  window._loginTab = 'id'; // 'id' or 'email'
-  window._setLoginTab = function(tab) {
-    window._loginTab = tab;
-    const idRow = document.getElementById('loginIdRow');
-    const emailRow = document.getElementById('loginEmailRow');
-    const tabId = document.getElementById('loginTabId');
-    const tabEmail = document.getElementById('loginTabEmail');
-    if (tab === 'id') {
-      if (idRow) idRow.style.display = 'block';
-      if (emailRow) emailRow.style.display = 'none';
-      if (tabId) { tabId.style.background = '#1a73e8'; tabId.style.color = 'white'; }
-      if (tabEmail) { tabEmail.style.background = 'transparent'; tabEmail.style.color = '#8a97a8'; }
-    } else {
-      if (idRow) idRow.style.display = 'none';
-      if (emailRow) emailRow.style.display = 'block';
-      if (tabEmail) { tabEmail.style.background = '#1a73e8'; tabEmail.style.color = 'white'; }
-      if (tabId) { tabId.style.background = 'transparent'; tabId.style.color = '#8a97a8'; }
-    }
-  };
+  // _setLoginTab defined in global script above
 
-  window._login = async function() {
+  window._loginReal = async function() {
     const pass = document.getElementById('loginPassword').value.trim();
     const err = document.getElementById('loginError');
     err.textContent = '';
@@ -2881,6 +2863,44 @@ tr:hover td { background: #f5f8ff !important; }
 <div id="formDrawerBackdrop" onclick="closeModal()" class="fixed inset-0 z-[155] bg-black/20 backdrop-blur-[1px]" style="display:none"></div>
 
 <!-- ═══════════════════════ LOGIN SCREEN ═══════════════════════ -->
+<script>
+  window._loginTab = 'id';
+  window._setLoginTab = function(tab) {
+    window._loginTab = tab;
+    var idRow = document.getElementById('loginIdRow');
+    var emailRow = document.getElementById('loginEmailRow');
+    var tabId = document.getElementById('loginTabId');
+    var tabEmail = document.getElementById('loginTabEmail');
+    if (tab === 'id') {
+      if (idRow) idRow.style.display = 'block';
+      if (emailRow) emailRow.style.display = 'none';
+      if (tabId) { tabId.style.background = '#1a73e8'; tabId.style.color = 'white'; }
+      if (tabEmail) { tabEmail.style.background = 'transparent'; tabEmail.style.color = '#8a97a8'; }
+    } else {
+      if (idRow) idRow.style.display = 'none';
+      if (emailRow) emailRow.style.display = 'block';
+      if (tabId) { tabId.style.background = 'transparent'; tabId.style.color = '#8a97a8'; }
+      if (tabEmail) { tabEmail.style.background = '#1a73e8'; tabEmail.style.color = 'white'; }
+    }
+  };
+  window._loginPending = false;
+  window._login = function() {
+    if (window._loginReal) {
+      window._loginReal();
+    } else {
+      window._loginPending = true;
+      document.getElementById('loginError').textContent = 'טוען...';
+      // Poll until module is ready
+      var poll = setInterval(function() {
+        if (window._loginReal) {
+          clearInterval(poll);
+          document.getElementById('loginError').textContent = '';
+          window._loginReal();
+        }
+      }, 100);
+    }
+  };
+</script>
 <div id="loginScreen" class="min-h-screen flex flex-col items-center justify-center" style="display:flex;background:#f0f2f5;direction:rtl">
   <!-- Same header style as app -->
   <div style="background:#fff;border-bottom:1px solid #e5e9f0;box-shadow:0 2px 8px rgba(0,0,0,0.08);width:100%;position:fixed;top:0;left:0;right:0;z-index:50">
