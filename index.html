@@ -166,17 +166,37 @@
     // Date
     (function() {
       const now = new Date();
-      // לועזי - צד שמאל
+      // לועזי
       const lat = now.toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
-      // עברי יהודי
+      // עברי יהודי אמיתי - אותיות בלבד
       let hebrewDate = '';
       try {
-        hebrewDate = now.toLocaleDateString('he-IL-u-ca-hebrew', {day:'numeric',month:'long',year:'numeric'});
+        // מקבל פורמט כמו "א׳ בניסן תשפ״ה"
+        const raw = now.toLocaleDateString('he-IL-u-ca-hebrew', {day:'numeric', month:'long', year:'numeric'});
+        hebrewDate = raw;
       } catch(e) {
-        const days = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
-        const months = ['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
-        hebrewDate = days[now.getDay()] + ' ' + now.getDate() + ' ' + months[now.getMonth()] + ' ' + now.getFullYear();
+        hebrewDate = now.toLocaleDateString('he-IL', {day:'numeric',month:'long',year:'numeric'});
       }
+      // המר מספרים לאותיות עבריות אם יש
+      const toHebNum = n => {
+        const ones = ['','א','ב','ג','ד','ה','ו','ז','ח','ט'];
+        const tens = ['','י','כ','ל','מ','נ','ס','ע','פ','צ'];
+        const hundreds = ['','ק','ר','ש','ת','תק','תר','תש','תת','תתק'];
+        n = parseInt(n);
+        if (!n || n <= 0) return '';
+        let result = '';
+        if (n >= 1000) { result += ones[Math.floor(n/1000)] + '''; n %= 1000; }
+        if (n >= 100) { result += hundreds[Math.floor(n/100)]; n %= 100; }
+        if (n === 16) return result + 'טז';
+        if (n === 15) return result + 'טו';
+        if (n >= 10) { result += tens[Math.floor(n/10)]; n %= 10; }
+        if (n > 0) result += ones[n];
+        if (result.length > 1) result = result.slice(0,-1) + '״' + result.slice(-1);
+        else if (result.length === 1) result += '׳';
+        return result;
+      };
+      // אם התוצאה מכילה מספרים, המר
+      hebrewDate = hebrewDate.replace(/(\d+)/g, n => toHebNum(parseInt(n)));
       const hed = document.getElementById('headerDateHe');
       const latd = document.getElementById('headerDateLat');
       if (hed) hed.textContent = hebrewDate;
@@ -1386,6 +1406,7 @@
         <div class="px-4 pb-4 pt-2 flex gap-2">
           ${!isDone ? `<button onclick="window._doneRequest('${rid}')" class="flex-1 bg-surface-container-highest border border-outline-variant/30 hover:bg-primary/10 hover:text-primary hover:border-primary/30 text-on-surface-variant font-label text-[10px] font-bold tracking-widest py-2.5 rounded-sm flex items-center justify-center gap-1.5 transition-all"><span class="material-symbols-outlined text-sm">check_circle</span> סמן כטופל</button>` : ''}
           <button onclick="window._replyRequest('${rid}')" class="flex-1 bg-surface-container-highest border border-outline-variant/30 hover:bg-primary/10 hover:text-primary hover:border-primary/30 text-on-surface-variant font-label text-[10px] font-bold tracking-widest py-2.5 rounded-sm flex items-center justify-center gap-1.5 transition-all"><span class="material-symbols-outlined text-sm">reply</span> הגב</button>
+          <button onclick="window._deleteRequest('${rid}')" class="bg-surface-container-highest border border-outline-variant/30 hover:bg-red-50 hover:text-red-500 hover:border-red-200 text-on-surface-variant font-label text-[10px] font-bold tracking-widest py-2.5 px-3 rounded-sm flex items-center justify-center transition-all"><span class="material-symbols-outlined text-sm">delete</span></button>
         </div>` : ''}
       </div>`;
     }).join('');
@@ -1454,6 +1475,12 @@
     });
     closeModal();
     showToast('תגובה נשלחה ✓');
+  };
+
+  window._deleteRequest = async function(rid) {
+    if (!confirm('למחוק בקשה זו?')) return;
+    await remove(ref(db, 'requests/' + rid));
+    showToast('בקשה נמחקה ✓');
   };
 
   // ── MY GEAR (soldier view) ────────────────────────────────────
@@ -1724,16 +1751,30 @@
 
       list.innerHTML = mine.reverse().map(([rid, r]) => {
         const isDone = r.status === 'done';
-        const statusColor = isDone ? 'primary' : 'tertiary';
         const statusText = isDone ? 'טופל ✓' : 'ממתין לטיפול';
-        return `<div class="bg-surface-container rounded-sm border border-white/5 overflow-hidden">
-          <div class="bg-surface-container-high px-5 py-3 flex items-center justify-between border-b border-white/5">
-            <span class="font-label text-[10px] text-on-surface-variant">${r.time}</span>
-            <span class="font-label text-[10px] px-3 py-1 bg-${statusColor}/10 text-${statusColor} border border-${statusColor}/20 rounded-sm font-bold">${statusText}</span>
+        const replies = r.replies ? Object.values(r.replies) : [];
+        const repliesHtml = replies.length
+          ? `<div class="border-t border-slate-100 px-4 py-3 space-y-2 bg-blue-50/50">
+              <p class="text-[10px] font-bold text-primary uppercase tracking-wider mb-1">תגובות רס"פ</p>
+              ${replies.map(rep => `
+                <div class="flex gap-2 items-start">
+                  <span class="material-symbols-outlined text-primary text-sm mt-0.5">chat_bubble</span>
+                  <div>
+                    <p class="text-xs font-bold text-primary">${rep.by} <span class="font-normal text-slate-400">${rep.time}</span></p>
+                    <p class="text-sm text-slate-700">${rep.text}</p>
+                  </div>
+                </div>`).join('')}
+            </div>`
+          : '';
+        return `<div class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+          <div class="px-4 py-3 flex items-center justify-between border-b border-slate-100 bg-slate-50">
+            <span class="text-[11px] text-slate-400">${r.time}</span>
+            <span class="text-[10px] px-2.5 py-1 rounded-full font-bold ${isDone ? 'bg-blue-100 text-blue-600' : 'bg-amber-100 text-amber-600'}">${statusText}</span>
           </div>
-          <div class="p-5">
-            <p class="text-on-surface text-sm leading-relaxed">${r.text}</p>
+          <div class="px-4 py-3">
+            <p class="text-sm text-slate-700 leading-relaxed">${r.text}</p>
           </div>
+          ${repliesHtml}
         </div>`;
       }).join('');
     });
