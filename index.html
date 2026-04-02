@@ -1,4 +1,4 @@
-<!-- VERSION: 1.0.1 - תיקון כניסה מספר אישי + שמירת id/email/phone ביוזרים - 03/04/2026 -->
+<!-- VERSION: 1.0.2 - תיקון הוספת חייל ללא התנתקות + דחיסת תמונות - 03/04/2026 -->
 <!DOCTYPE html>
 <html dir="rtl" lang="he">
 <head>
@@ -1143,38 +1143,53 @@
     const pass = document.getElementById('s_pass').value;
     if (!name || !id) { showToast('נא למלא שם ומספר אישי', true); return; }
 
+    // Resize photo before saving (max 200px, to stay under Firebase 10MB limit)
     let photoBase64 = '';
     const photoInput = document.getElementById('s_photo');
     if (photoInput && photoInput.files[0]) {
       photoBase64 = await new Promise(res => {
-        const r2 = new FileReader();
-        r2.onload = e2 => res(e2.target.result);
-        r2.readAsDataURL(photoInput.files[0]);
+        const img = new Image();
+        const reader = new FileReader();
+        reader.onload = e => {
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const maxSize = 200;
+            let w = img.width, h = img.height;
+            if (w > h) { if (w > maxSize) { h = h * maxSize / w; w = maxSize; } }
+            else { if (h > maxSize) { w = w * maxSize / h; h = maxSize; } }
+            canvas.width = w; canvas.height = h;
+            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+            res(canvas.toDataURL('image/jpeg', 0.7));
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(photoInput.files[0]);
       });
     }
 
+    // Create Firebase Auth account for soldier using secondary app instance
     let uid = 'soldier_' + Date.now();
     if (email && pass) {
       try {
-        // Save current user credentials before creating new user
-        const currentEmail = auth.currentUser?.email;
-        const cred = await createUserWithEmailAndPassword(auth, email, pass);
+        const { initializeApp: initApp2 } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
+        const { getAuth: getAuth2, createUserWithEmailAndPassword: createUser2 } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
+        const app2 = initApp2({
+          apiKey: "AIzaSyD6fG2R9bjRq4PygvAwI3wgbQe2JViUzcQ",
+          authDomain: "ariel-e997b.firebaseapp.com",
+          projectId: "ariel-e997b"
+        }, 'secondary-' + Date.now());
+        const auth2 = getAuth2(app2);
+        const cred = await createUser2(auth2, email, pass);
         uid = cred.user.uid;
-        // Sign back in as the original rasp user
-        if (currentEmail) {
-          try {
-            // Re-authenticate current user silently — just update DB, don't sign out
-            await signInWithEmailAndPassword(auth, currentEmail, '__SKIP__');
-          } catch(e2) {
-            // Expected to fail — that's ok, we already have the uid we need
-          }
+        await cred.user.delete(); // cleanup secondary instance user session
+      } catch(e) {
+        if (e.code === 'auth/email-already-in-use') {
+          showToast('אימייל כבר בשימוש', true); return;
         }
-      } catch(e) { 
-        if (e.code !== 'auth/wrong-password' && e.code !== 'auth/invalid-credential') {
-          showToast('שגיאה ביצירת משתמש: ' + e.message, true); return; 
-        }
+        showToast('שגיאה ביצירת חשבון: ' + e.message, true); return;
       }
     }
+
     const sid = 's' + Date.now();
     await set(ref(db, 'soldiers/' + sid), { name, id, phone, role, status:'כשיר', items:[], email: email||'', photo: photoBase64 });
     await set(ref(db, 'users/' + uid), { name, role, uid, soldierId: sid, id: id||'', email: email||'', phone: phone||'' });
@@ -3028,7 +3043,7 @@ tr:hover td { background: #f5f8ff !important; }
 
 <!-- Version Badge -->
 <div style="position:fixed;bottom:66px;left:8px;z-index:9999;background:rgba(0,0,0,0.15);color:#94a3b8;font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;letter-spacing:.05em;pointer-events:none;font-family:monospace">
-  v1.0.1
+  v1.0.2
 </div>
 </body>
 </html>
