@@ -167,7 +167,7 @@
         n = parseInt(n);
         if (!n || n <= 0) return '';
         let result = '';
-        if (n >= 1000) { result += ones[Math.floor(n/1000)] + '''; n %= 1000; }
+        if (n >= 1000) { result += ones[Math.floor(n/1000)] + "'"; n %= 1000; }
         if (n >= 100) { result += hundreds[Math.floor(n/100)]; n %= 100; }
         if (n === 16) return result + 'טז';
         if (n === 15) return result + 'טו';
