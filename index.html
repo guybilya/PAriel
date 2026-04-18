@@ -1928,14 +1928,8 @@
         <div><label class="field-lbl">סיסמה חדשה</label><input id="profilePass" class="field-inp" type="password" placeholder="השאר ריק לאי-שינוי"/></div>
       </div>
       <p id="profileErr" class="text-xs text-error min-h-[16px]"></p>
-      <div style="padding-top:12px;margin-top:8px;border-top:1px solid #e5e9f0">
-        <button onclick="window._showInstallGuide()" style="width:100%;padding:13px;background:#f0f7ff;color:#1a73e8;border:1.5px solid #c5d8f5;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px">
-          <span class="material-symbols-outlined" style="font-size:18px">install_mobile</span>
-          התקן אפליקציה
-        </button>
-      </div>
     </div>`,
-    '<button onclick="closeModal()" class="btn-cancel">ביטול</button><button onclick="window._saveProfile()" class="btn-save">שמור</button>');
+    '<button onclick="window._showInstallGuide()" style="padding:11px 14px;background:#f0f7ff;color:#1a73e8;border:1.5px solid #c5d8f5;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:6px"><span class="material-symbols-outlined" style="font-size:16px">install_mobile</span>התקן</button><button onclick="closeModal()" class="btn-cancel">ביטול</button><button onclick="window._saveProfile()" class="btn-save">שמור</button>');
   };
 
   window._saveProfile=async function(){
