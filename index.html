@@ -1338,7 +1338,7 @@
         </div>
         <div>
           <label class="field-lbl">ציוד חתום</label>
-          <select id="s_items_e" multiple class="field-inp text-sm" style="height:80px" size="4">${skuOptions}</select>
+          <select id="s_items_e" multiple class="field-inp text-sm" style="height:80px" size="5">${skuOptions}</select>
         </div>
         <div class="border-t border-slate-100 pt-3">
           <p class="text-xs font-semibold text-slate-500 mb-2">פרטי התחברות</p>
@@ -1353,6 +1353,15 @@
       `<button onclick="closeModal()" class="btn-cancel">ביטול</button>
        <button onclick="window._updateSoldier('${sid}')" class="btn-save">שמור</button>`
     );
+    // Deselect all options that shouldn't be selected
+    setTimeout(() => {
+      const sel = document.getElementById('s_items_e');
+      if (sel) {
+        Array.from(sel.options).forEach(opt => {
+          opt.selected = soldierItems.includes(opt.value);
+        });
+      }
+    }, 50);
   };
 
   window._updateSoldier = async function(sid) {
