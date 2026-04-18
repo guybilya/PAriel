@@ -96,7 +96,7 @@
         if (match?.email) { await signInWithEmailAndPassword(auth, match.email, pass); return; }
       }
     } catch(e) {}
-    err.textContent = 'מספר אישי או סיסמה שגויים';
+    err.textContent = 'מספר אישי או סיסמה שגויים — ודא שהחשבון נוצר בהצלחה';
   };
 
   window._logout = async function() { await signOut(auth); };
@@ -1107,9 +1107,21 @@
       });
     });
 
-    const itemsHtml=(s.items||[]).map(sku=>{
+    const itemsHtml=(s.items||[]).filter(sku=>!sku.includes('_')).map(sku=>{
       const item=allItems[sku];
-      return item?`<div class="flex justify-between items-center py-2 border-b border-outline-variant/10"><span class="text-sm font-medium">${item.name}</span><span class="text-[10px] font-label text-on-surface-variant">${sku}</span></div>`:
+      // Find which warehouse this item is in
+      let whKey='warehouse_a';
+      Object.entries(invSnap.val()||{}).forEach(([wk,wv])=>{ if(wv&&wv[sku]) whKey=wk; });
+      return item?`<div class="flex justify-between items-center py-2 border-b border-outline-variant/10">
+        <div class="flex-1 min-w-0">
+          <span class="text-sm font-medium block">${item.name}</span>
+          <span class="text-[10px] font-label text-on-surface-variant">${sku}</span>
+        </div>
+        <button onclick="window._returnItemFromSoldier('${sid}','${sku}','${whKey}',closeModal)" 
+          class="mr-2 px-2 py-1 bg-error/10 text-error border border-error/20 rounded-sm font-label text-[10px] font-bold hover:bg-error/20 transition-colors shrink-0">
+          זיכוי
+        </button>
+      </div>`:
         `<div class="py-2 border-b border-outline-variant/10 text-sm text-on-surface-variant">${sku}</div>`;
     }).join('')||'<p class="text-on-surface-variant text-sm py-2">אין ציוד חתום</p>';
 
@@ -1139,6 +1151,38 @@
       </div>`);
   };
 
+
+  window._returnItemFromSoldier = async function(sid, sku, whKey, onDone) {
+    if (!confirm('לזכות פריט זה מהחייל?')) return;
+    try {
+      // Update inventory: issued-1, good+1
+      const invSnap = await get(ref(db,'inventory/'+whKey+'/'+sku));
+      if (invSnap.exists()) {
+        const item = invSnap.val();
+        await update(ref(db,'inventory/'+whKey+'/'+sku), {
+          good: (item.good||0)+1,
+          issued: Math.max(0,(item.issued||0)-1)
+        });
+      }
+      // Remove from soldier items
+      const solSnap = await get(ref(db,'soldiers/'+sid));
+      if (solSnap.exists()) {
+        const sol = solSnap.val();
+        const newItems = (sol.items||[]).filter(i => i !== sku);
+        await update(ref(db,'soldiers/'+sid), {items: newItems});
+      }
+      // Log
+      const invItem = (await get(ref(db,'inventory/'+whKey+'/'+sku))).val();
+      const solName = (await get(ref(db,'soldiers/'+sid+'/name'))).val()||'';
+      await _logActivity('זיכוי', invItem?.name||sku, sku, solName, 'תקין');
+      showToast('זיכוי בוצע ✓');
+      if (onDone) onDone();
+      // Refresh soldiers view
+      setTimeout(() => { if(activePage==='soldiers') renderSoldiers(); }, 300);
+    } catch(e) {
+      showToast('שגיאה: '+e.message, true);
+    }
+  };
   window._openAddSoldier = function() {
     showModal('הוספת חייל',`<div class="space-y-3">
         <div class="flex items-center gap-3">
