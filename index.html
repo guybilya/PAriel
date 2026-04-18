@@ -1207,16 +1207,24 @@
     let uid='soldier_'+Date.now();
     if (email&&pass) {
       try {
-        const {initializeApp:initApp2}=await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
-        const {getAuth:getAuth2,createUserWithEmailAndPassword:createUser2}=await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
-        const app2=initApp2({apiKey:"AIzaSyD6fG2R9bjRq4PygvAwI3wgbQe2JViUzcQ",authDomain:"ariel-e997b.firebaseapp.com",projectId:"ariel-e997b"},'secondary-'+Date.now());
-        const auth2=getAuth2(app2);
-        const cred=await createUser2(auth2,email,pass);
-        uid=cred.user.uid;
-        // לא מוחקים — החשבון צריך להישאר כדי שהחייל יוכל להתחבר
+        // שימוש ב-Firebase Auth REST API — אמין יותר מ-secondary app
+        const apiKey = 'AIzaSyD6fG2R9bjRq4PygvAwI3wgbQe2JViUzcQ';
+        const res = await fetch(
+          'https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=' + apiKey,
+          {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({email, password: pass, returnSecureToken: true})
+          }
+        );
+        const data = await res.json();
+        if (data.error) {
+          if (data.error.message === 'EMAIL_EXISTS') { showToast('אימייל כבר בשימוש', true); return; }
+          showToast('שגיאה: ' + data.error.message, true); return;
+        }
+        uid = data.localId;
       } catch(e) {
-        if(e.code==='auth/email-already-in-use'){showToast('אימייל כבר בשימוש',true);return;}
-        showToast('שגיאה: '+e.message,true);return;
+        showToast('שגיאה ביצירת חשבון: ' + e.message, true); return;
       }
     }
     const sid='s'+Date.now();
