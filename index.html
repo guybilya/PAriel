@@ -1929,7 +1929,7 @@
       </div>
       <p id="profileErr" class="text-xs text-error min-h-[16px]"></p>
     </div>`,
-    '<button onclick="window._promptInstall()" style="padding:11px 16px;background:#f0f7ff;color:#1a73e8;border:1.5px solid #c5d8f5;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:6px;white-space:nowrap"><span class="material-symbols-outlined" style="font-size:16px">install_mobile</span>התקן אפליקציה</button><button onclick="closeModal()" class="btn-cancel">ביטול</button><button onclick="window._saveProfile()" class="btn-save">שמור</button>');
+    '<button onclick="window._showInstallGuide()" style="padding:11px 16px;background:#f0f7ff;color:#1a73e8;border:1.5px solid #c5d8f5;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:6px;white-space:nowrap"><span class="material-symbols-outlined" style="font-size:16px">install_mobile</span>התקן אפליקציה</button><button onclick="closeModal()" class="btn-cancel">ביטול</button><button onclick="window._saveProfile()" class="btn-save">שמור</button>');
   };
 
   window._saveProfile=async function(){
@@ -2254,32 +2254,47 @@ window.addEventListener('appinstalled', function() {
   if (window.showToast) showToast('האפליקציה הותקנה בהצלחה! ✓');
 });
 
-window._promptInstall = function() {
+window._showInstallGuide = function() {
+  // Try native prompt if available
   if (window._deferredInstallPrompt) {
-    // Native browser install prompt available
     window._deferredInstallPrompt.prompt();
-    window._deferredInstallPrompt.userChoice.then(function(result) {
-      console.log('PWA install:', result.outcome);
+    window._deferredInstallPrompt.userChoice.then(function() {
       window._deferredInstallPrompt = null;
     });
-  } else if (navigator.standalone || window.matchMedia('(display-mode: standalone)').matches) {
-    // Already installed
-    if (window.showToast) showToast('האפליקציה כבר מותקנת ✓');
-  } else {
-    // Show manual instructions modal
-    var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-    var msg = isIOS
-      ? 'להתקנה על אייפון:
-1. לחץ על כפתור השיתוף ⬆️
-2. גלול מטה ובחר "הוסף למסך הבית"
-3. לחץ "הוסף"'
-      : 'להתקנה על אנדרואיד:
-1. פתח בכרום
-2. לחץ על תפריט ⋮ (שלוש נקודות)
-3. בחר "הוסף למסך הבית"';
-    alert(msg);
+    closeModal();
+    return;
   }
+  // Already installed
+  if (window.matchMedia('(display-mode: standalone)').matches || navigator.standalone) {
+    closeModal();
+    showToast('האפליקציה כבר מותקנת ✓');
+    return;
+  }
+  // Show manual guide
+  closeModal();
+  setTimeout(function() {
+    showModal('הוספה למסך הבית',
+      '<div class="space-y-3">' +
+        '<p class="text-sm text-on-surface-variant mb-4">פתח את האפליקציה בכרום ובצע:</p>' +
+        '<div class="flex items-center gap-4 p-3 bg-surface-container rounded-lg">' +
+          '<div class="w-10 h-10 bg-primary rounded-full flex items-center justify-center shrink-0 text-white font-bold text-lg">1</div>' +
+          '<div><p class="font-bold text-sm">לחץ על ⋮</p><p class="text-xs text-on-surface-variant">שלוש הנקודות בפינה הימנית</p></div>' +
+        '</div>' +
+        '<div class="flex items-center gap-4 p-3 bg-surface-container rounded-lg">' +
+          '<div class="w-10 h-10 bg-primary rounded-full flex items-center justify-center shrink-0 text-white font-bold text-lg">2</div>' +
+          '<div><p class="font-bold text-sm">בחר "הוסף למסך הבית"</p><p class="text-xs text-on-surface-variant">או "התקן אפליקציה"</p></div>' +
+        '</div>' +
+        '<div class="flex items-center gap-4 p-3 bg-surface-container rounded-lg">' +
+          '<div class="w-10 h-10 bg-primary rounded-full flex items-center justify-center shrink-0 text-white font-bold text-lg">3</div>' +
+          '<div><p class="font-bold text-sm">לחץ "הוסף"</p><p class="text-xs text-on-surface-variant">הסמל יופיע על מסך הבית</p></div>' +
+        '</div>' +
+      '</div>',
+      '<button onclick="closeModal()" class="btn-save" style="flex:none;padding:11px 32px">הבנתי 👍</button>'
+    );
+  }, 200);
 };
+window._promptInstall = window._showInstallGuide;
+// REMOVE OLD DUPLICATE
 </script>
 </body>
 </html>
