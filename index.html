@@ -1275,18 +1275,19 @@
           }
         );
         const data = await res.json();
+        console.log('Firebase Auth response:', JSON.stringify(data));
         if (data.error) {
           if (data.error.message === 'EMAIL_EXISTS') { showToast('אימייל כבר בשימוש', true); return; }
           if ((data.error.message||'').includes('WEAK_PASSWORD')) { showToast('סיסמה חלשה — לפחות 6 תווים', true); return; }
           showToast('שגיאת Firebase: ' + data.error.message, true); return;
         }
-        if (!data.localId) { showToast('שגיאה: לא נוצר uid', true); return; }
+        if (!data.localId) { showToast('שגיאה: לא התקבל uid מ-Firebase', true); return; }
         uid = data.localId;
       } catch(e) {
         showToast('שגיאה: ' + e.message, true); return;
       }
     }
-    if (!uid) uid = 'soldier_' + Date.now();
+    if (!uid) { showToast('שגיאה: לא הוזנו אימייל וסיסמה — החייל לא יוכל להתחבר', true); return; }
     const sid='s'+Date.now();
     await set(ref(db,'soldiers/'+sid),{name,id,phone,role,status:'כשיר',items:[],email:email||'',photo:photoBase64});
     await set(ref(db,'users/'+uid),{name,role,uid,soldierId:sid,id:id||'',email:email||'',phone:phone||''});
