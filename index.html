@@ -1219,7 +1219,7 @@
         );
         const data = await res.json();
         if (data.error) {
-          if (data.error.message === 'EMAIL_EXISTS') { showToast('אימייל כבר בשימוש', true); return; }
+          if (data.error.message === 'EMAIL_EXISTS') { showToast('אימייל כבר בשימוש — בחר אימייל אחר', true); return; }
           showToast('שגיאה: ' + data.error.message, true); return;
         }
         uid = data.localId;
@@ -1242,8 +1242,9 @@
     const allInv = invSnap.val()||{};
     const allItems={};
     Object.entries(allInv).forEach(([wk,wv])=>Object.entries(wv||{}).forEach(([sku,item])=>{allItems[sku]={...item,warehouse:wk};}));
+    const soldierItems = Array.isArray(s.items) ? s.items.filter(Boolean) : [];
     const skuOptions=Object.entries(allItems).map(([sku,item])=>{
-      const sel=(s.items||[]).includes(sku)?'selected':'';
+      const sel=soldierItems.includes(sku)?'selected':'';
       return `<option value="${sku}" ${sel}>${item.name} (${sku})</option>`;
     }).join('');
 
@@ -1648,6 +1649,7 @@
       <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
         <div><span class="font-label text-xs text-primary uppercase tracking-widest block mb-0.5">מחסן מיוחד</span><h1 class="font-headline text-3xl font-extrabold tracking-tighter">מחסן צל"מים</h1></div>
         ${currentRole==='rasp'?'<button onclick="window._openAddArmoryItem()" class="flex items-center gap-1 px-4 py-2.5 bg-primary text-on-primary rounded-lg font-semibold text-sm"><span class="material-symbols-outlined" style="font-size:16px">add</span> פריט חדש</button>':''}
+        <button onclick="window._exportArmoryCSV()" class="flex items-center gap-1 px-4 py-2.5 bg-surface-container-highest text-primary font-label text-xs font-bold rounded-sm border border-primary/10"><span class="material-symbols-outlined" style="font-size:16px">sim_card_download</span> CSV</button>}
       </div>
       <div id="armoryStats" class="grid grid-cols-3 gap-3"></div>
       <div class="flex gap-2 border-b border-slate-200 overflow-x-auto">
@@ -1876,6 +1878,26 @@
     const a=document.createElement('a');
     a.href=url;a.download=`inventory_${whKey}_${Date.now()}.csv`;a.click();
   };
+  window._exportArmoryCSV = async function() {
+    const snap = await get(ref(db, 'armory'));
+    if (!snap.exists()) { showToast('אין נתונים לייצוא', true); return; }
+    const data = snap.val();
+    const catNames = { cameras: 'צל"מים', weapons: 'נשקים', machleons: 'מקלעים' };
+    const rows = [['קטגוריה','מס׳ סידורי','שם / דגם','מצב','חייל משויך']];
+    Object.entries(data).forEach(([cat, items]) => {
+      Object.entries(items||{}).forEach(([itemId, item]) => {
+        if (!item.name || item.name === 'undefined') return;
+        rows.push([catNames[cat]||cat, itemId, item.name, item.status||'תקין', item.holderName||'—']);
+      });
+    });
+    const csv = rows.map(r => r.map(c => '"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
+    const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8;'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href=url; a.download='armory_'+Date.now()+'.csv'; a.click();
+    showToast('ייצוא CSV בוצע ✓');
+  };
+
 
   window._resetAllData=function(){
     showModal('איפוס מסד נתונים',`<div class="space-y-4">
