@@ -1213,7 +1213,7 @@
         const auth2=getAuth2(app2);
         const cred=await createUser2(auth2,email,pass);
         uid=cred.user.uid;
-        await cred.user.delete();
+        // לא מוחקים — החשבון צריך להישאר כדי שהחייל יוכל להתחבר
       } catch(e) {
         if(e.code==='auth/email-already-in-use'){showToast('אימייל כבר בשימוש',true);return;}
         showToast('שגיאה: '+e.message,true);return;
