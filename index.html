@@ -1302,58 +1302,56 @@
     const invSnap = await get(ref(db,'inventory'));
     const allInv = invSnap.val()||{};
     const allItems = {};
-    Object.entries(allInv).forEach(([wk,wv]) => Object.entries(wv||{}).forEach(([sku,item]) => { allItems[sku] = {...item, warehouse:wk}; }));
-
+    Object.entries(allInv).forEach(([wk,wv]) => {
+      Object.entries(wv||{}).forEach(([sku,item]) => { allItems[sku] = {...item, warehouse:wk}; });
+    });
     const soldierItems = Array.isArray(s.items) ? s.items.filter(Boolean) : [];
-
     const skuOptions = Object.entries(allItems).map(([sku,item]) => {
       const sel = soldierItems.includes(sku) ? ' selected' : '';
-      return '<option value="' + sku + '"' + sel + '>' + item.name + ' (' + sku + ')</option>';
+      return `<option value="${sku}"${sel}>${item.name} (${sku})</option>`;
     }).join('');
 
-    const photoPreview = s.photo
-      ? '<img src="' + s.photo + '" class="w-full h-full object-cover"/>'
-      : '<span class="material-symbols-outlined text-slate-300 text-2xl">person</span>';
+    const modalBody = `
+      <div class="flex gap-3 items-center p-3 bg-slate-50 rounded-xl border border-slate-200 mb-4">
+        <div id="editPhotoPreview" onclick="document.getElementById('s_photo_edit').click()" class="w-14 h-14 rounded-xl overflow-hidden bg-white border-2 border-dashed border-slate-300 flex items-center justify-center cursor-pointer shrink-0">
+          ${s.photo ? '<img src="'+s.photo+'" class="w-full h-full object-cover"/>' : '<span class="material-symbols-outlined text-slate-300 text-2xl">person</span>'}
+        </div>
+        <input id="s_photo_edit" type="file" accept="image/*" class="hidden" onchange="window._previewPhoto('s_photo_edit','editPhotoPreview')"/>
+        <div><p class="text-sm font-semibold text-slate-600">תמונת פנים</p><button onclick="document.getElementById('s_photo_edit').click()" class="text-xs text-primary font-semibold">החלף</button></div>
+      </div>
+      <div class="space-y-3">
+        <div class="grid grid-cols-2 gap-2">
+          <div><label class="field-lbl">שם מלא</label><input id="s_name_e" class="field-inp" value="${s.name}" type="text"/></div>
+          <div><label class="field-lbl">מספר אישי</label><input id="s_id_e" class="field-inp" value="${s.id}" type="text"/></div>
+          <div><label class="field-lbl">טלפון</label><input id="s_phone_e" class="field-inp" value="${s.phone||''}" type="text"/></div>
+          <div><label class="field-lbl">תפקיד</label>
+            <select id="s_role_e" class="field-inp">
+              <option value="soldier" ${s.role==='soldier'?'selected':''}>חייל</option>
+              <option value="rasp" ${s.role==='rasp'?'selected':''}>רס"פ</option>
+            </select>
+          </div>
+          <div><label class="field-lbl">סטטוס</label>
+            <select id="s_status_e" class="field-inp">
+              ${['כשיר','חסר ציוד','מחלה','היעדרות'].map(st => '<option '+(s.status===st?'selected':'')+'>'+st+'</option>').join('')}
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="field-lbl">ציוד חתום</label>
+          <select id="s_items_e" multiple class="field-inp text-sm" style="height:80px" size="4">${skuOptions}</select>
+        </div>
+        <div class="border-t border-slate-100 pt-3">
+          <p class="text-xs font-semibold text-slate-500 mb-2">פרטי התחברות</p>
+          <div class="space-y-2">
+            <div><label class="field-lbl">אימייל</label><input id="s_email_e" class="field-inp" value="${s.email||''}" type="email"/></div>
+            <div><label class="field-lbl">סיסמה חדשה</label><input id="s_pass_e" class="field-inp" type="password" placeholder="השאר ריק לאי-שינוי"/></div>
+          </div>
+        </div>
+      </div>`;
 
-    showModal('עריכת חייל',
-      '<div class="flex gap-3 items-center p-3 bg-slate-50 rounded-xl border border-slate-200 mb-4">' +
-        '<div id="editPhotoPreview" onclick="document.getElementById(\'s_photo_edit\').click()" class="w-14 h-14 rounded-xl overflow-hidden bg-white border-2 border-dashed border-slate-300 flex items-center justify-center cursor-pointer shrink-0">' +
-          photoPreview +
-        '</div>' +
-        '<input id="s_photo_edit" type="file" accept="image/*" class="hidden" onchange="window._previewPhoto(\'s_photo_edit\',\'editPhotoPreview\')"/>' +
-        '<div><p class="text-sm font-semibold text-slate-600">תמונת פנים</p><button onclick="document.getElementById(\'s_photo_edit\').click()" class="text-xs text-primary font-semibold">החלף</button></div>' +
-      '</div>' +
-      '<div class="space-y-3">' +
-        '<div class="grid grid-cols-2 gap-2">' +
-          '<div><label class="field-lbl">שם מלא</label><input id="s_name_e" class="field-inp" value="' + s.name + '" type="text"/></div>' +
-          '<div><label class="field-lbl">מספר אישי</label><input id="s_id_e" class="field-inp" value="' + s.id + '" type="text"/></div>' +
-          '<div><label class="field-lbl">טלפון</label><input id="s_phone_e" class="field-inp" value="' + (s.phone||'') + '" type="text"/></div>' +
-          '<div><label class="field-lbl">תפקיד</label>' +
-            '<select id="s_role_e" class="field-inp">' +
-              '<option value="soldier"' + (s.role==='soldier'?' selected':'') + '>חייל</option>' +
-              '<option value="rasp"' + (s.role==='rasp'?' selected':'') + '>רס"פ</option>' +
-            '</select>' +
-          '</div>' +
-          '<div><label class="field-lbl">סטטוס</label>' +
-            '<select id="s_status_e" class="field-inp">' +
-              ['כשיר','חסר ציוד','מחלה','היעדרות'].map(st => '<option' + (s.status===st?' selected':'') + '>' + st + '</option>').join('') +
-            '</select>' +
-          '</div>' +
-        '</div>' +
-        '<div>' +
-          '<label class="field-lbl">ציוד חתום</label>' +
-          '<select id="s_items_e" multiple class="field-inp text-sm" style="height:80px" size="4">' + skuOptions + '</select>' +
-        '</div>' +
-        '<div class="border-t border-slate-100 pt-3">' +
-          '<p class="text-xs font-semibold text-slate-500 mb-2">פרטי התחברות</p>' +
-          '<div class="space-y-2">' +
-            '<div><label class="field-lbl">אימייל</label><input id="s_email_e" class="field-inp" value="' + (s.email||'') + '" type="email"/></div>' +
-            '<div><label class="field-lbl">סיסמה חדשה</label><input id="s_pass_e" class="field-inp" type="password" placeholder="השאר ריק לאי-שינוי"/></div>' +
-          '</div>' +
-        '</div>' +
-      '</div>',
-      '<button onclick="closeModal()" class="btn-cancel">ביטול</button>' +
-      '<button onclick="window._updateSoldier(\'' + sid + '\')" class="btn-save">שמור</button>'
+    showModal('עריכת חייל', modalBody,
+      `<button onclick="closeModal()" class="btn-cancel">ביטול</button>
+       <button onclick="window._updateSoldier('${sid}')" class="btn-save">שמור</button>`
     );
   };
 
