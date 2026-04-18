@@ -85,18 +85,36 @@
     const personalId = document.getElementById('loginPersonalId').value.trim();
     if (!personalId) { err.textContent = 'נא להזין מספר אישי'; return; }
     try {
+      // חיפוש לפי מספר אישי בטבלת soldiers
       const solSnap = await get(ref(db, 'soldiers'));
       if (solSnap.exists()) {
-        const match = Object.values(solSnap.val()).find(s => String(s.id) === String(personalId));
-        if (match?.email) { await signInWithEmailAndPassword(auth, match.email, pass); return; }
+        const soldiers = solSnap.val();
+        const matchEntry = Object.entries(soldiers).find(([,s]) => String(s.id) === String(personalId));
+        if (matchEntry) {
+          const [matchSid, matchSoldier] = matchEntry;
+          if (matchSoldier.email) {
+            const userCred = await signInWithEmailAndPassword(auth, matchSoldier.email, pass);
+            // אם אין users entry — צור אותו
+            const userSnap = await get(ref(db, 'users/' + userCred.user.uid));
+            if (!userSnap.exists()) {
+              await set(ref(db, 'users/' + userCred.user.uid), {
+                name: matchSoldier.name, role: matchSoldier.role||'soldier',
+                uid: userCred.user.uid, soldierId: matchSid,
+                id: matchSoldier.id||'', email: matchSoldier.email||'', phone: matchSoldier.phone||''
+              });
+            }
+            return;
+          }
+        }
       }
+      // חיפוש לפי מספר אישי בטבלת users
       const usersSnap = await get(ref(db, 'users'));
       if (usersSnap.exists()) {
         const match = Object.values(usersSnap.val()).find(u => String(u.id) === String(personalId));
         if (match?.email) { await signInWithEmailAndPassword(auth, match.email, pass); return; }
       }
-    } catch(e) {}
-    err.textContent = 'מספר אישי או סיסמה שגויים — ודא שהחשבון נוצר בהצלחה';
+    } catch(e) { err.textContent = 'שגיאה: ' + e.message; return; }
+    err.textContent = 'מספר אישי או סיסמה שגויים';
   };
 
   window._logout = async function() { await signOut(auth); };
@@ -1097,92 +1115,88 @@
     if (!snap.exists()) return;
     const s = snap.val();
     const [invSnap, armSnap] = await Promise.all([get(ref(db,'inventory')), get(ref(db,'armory'))]);
-    const allItems={};
-    Object.values(invSnap.val()||{}).forEach(wh=>Object.assign(allItems,wh));
-    const armoryData=armSnap.val()||{};
-    const armoryItems=[];
-    Object.entries(armoryData).forEach(([cat,catItems])=>{
-      Object.entries(catItems||{}).forEach(([itemId,item])=>{
-        if(item.holderId===sid) armoryItems.push({itemId,name:item.name,cat,catLabel:ARMORY_CATS[cat]?.label||cat});
+    const allItems = {};
+    Object.values(invSnap.val()||{}).forEach(wh => Object.assign(allItems, wh));
+    const armoryData = armSnap.val()||{};
+    const armoryItems = [];
+    Object.entries(armoryData).forEach(([cat,catItems]) => {
+      Object.entries(catItems||{}).forEach(([itemId,item]) => {
+        if (item.holderId === sid) armoryItems.push({itemId, name:item.name, cat, catLabel:ARMORY_CATS[cat]?.label||cat});
       });
     });
 
-    const itemsHtml=(s.items||[]).filter(sku=>!sku.includes('_')).map(sku=>{
-      const item=allItems[sku];
-      // Find which warehouse this item is in
-      let whKey='warehouse_a';
-      Object.entries(invSnap.val()||{}).forEach(([wk,wv])=>{ if(wv&&wv[sku]) whKey=wk; });
-      return item?`<div class="flex justify-between items-center py-2 border-b border-outline-variant/10">
-        <div class="flex-1 min-w-0">
-          <span class="text-sm font-medium block">${item.name}</span>
-          <span class="text-[10px] font-label text-on-surface-variant">${sku}</span>
-        </div>
-        <button onclick="window._returnItemFromSoldier('${sid}','${sku}','${whKey}',closeModal)" 
-          class="mr-2 px-2 py-1 bg-error/10 text-error border border-error/20 rounded-sm font-label text-[10px] font-bold hover:bg-error/20 transition-colors shrink-0">
-          זיכוי
-        </button>
-      </div>`:
-        `<div class="py-2 border-b border-outline-variant/10 text-sm text-on-surface-variant">${sku}</div>`;
-    }).join('')||'<p class="text-on-surface-variant text-sm py-2">אין ציוד חתום</p>';
+    const soldierRegItems = (s.items||[]).filter(sku => !sku.includes('_'));
+    const invData = invSnap.val()||{};
 
-    const hasItems=(s.items||[]).length>0||armoryItems.length>0;
+    const itemsHtml = soldierRegItems.length === 0
+      ? '<p class="text-on-surface-variant text-sm py-2">אין ציוד חתום</p>'
+      : soldierRegItems.map(sku => {
+          const item = allItems[sku];
+          let whKey = 'warehouse_a';
+          Object.entries(invData).forEach(([wk,wv]) => { if (wv&&wv[sku]) whKey=wk; });
+          const itemName = item ? item.name : sku;
+          return '<div class="flex justify-between items-center py-2 border-b border-outline-variant/10">' +
+            '<div class="flex-1 min-w-0">' +
+              '<span class="text-sm font-medium block">' + itemName + '</span>' +
+              '<span class="text-[10px] font-label text-on-surface-variant">' + sku + '</span>' +
+            '</div>' +
+            '<button onclick="window._returnItemFromSoldier(\'' + sid + '\',\'' + sku + '\',\'' + whKey + '\')" ' +
+              'class="mr-2 px-2 py-1 bg-error/10 text-error border border-error/20 rounded-sm font-label text-[10px] font-bold hover:bg-error/20 shrink-0">' +
+              'זיכוי' +
+            '</button>' +
+          '</div>';
+        }).join('');
 
-    showModal(s.name,`<div>
-      <div class="flex items-center gap-4 mb-4">
-        <div class="w-14 h-14 bg-primary-container rounded-sm flex items-center justify-center border-2 border-primary/20 overflow-hidden">
-          ${s.photo?`<img src="${s.photo}" class="w-full h-full object-cover"/>`:'<span class="material-symbols-outlined text-primary text-3xl">person</span>'}
-        </div>
-        <div>
-          <h3 class="font-headline text-xl font-extrabold">${s.name}</h3>
-          <p class="text-primary font-label text-xs">מס׳ ${s.id}</p>
-          <p class="text-on-surface-variant font-label text-[10px] mt-0.5">${s.phone||''} | ${s.status||''}</p>
-        </div>
-      </div>
-      <div>
-        <h4 class="font-label text-[10px] text-primary tracking-widest border-b border-outline-variant/30 pb-2 mb-3">ציוד חתום (${(s.items||[]).length})</h4>
-        ${itemsHtml}
-      </div>
-      ${armoryItems.length>0?`<div class="mt-3"><h4 class="font-label text-[10px] tracking-widest border-b border-outline-variant/30 pb-2 mb-3" style="color:#6366f1">צל"מים (${armoryItems.length})</h4>${armoryItems.map(ai=>`<div class="flex justify-between py-2 border-b border-outline-variant/10"><div class="flex items-center gap-2"><span class="text-xs px-2 py-0.5 rounded-full font-semibold" style="background:#6366f122;color:#6366f1">${ai.catLabel}</span><span class="text-sm">${ai.name}</span></div><span class="text-[10px] text-on-surface-variant">${ai.itemId}</span></div>`).join('')}</div>`:''}
-      ${hasItems?'<div class="mt-4 p-3 bg-error/5 border border-error/20 rounded-sm flex items-center gap-2"><span class="material-symbols-outlined text-error" style="font-size:16px">warning</span><p class="text-xs text-error font-semibold">לא ניתן למחוק — יש לזכות את כל הציוד תחילה</p></div>':''}
-      <div class="flex gap-2 mt-5">
-        ${!hasItems?`<button onclick="window._deleteSoldier('${sid}')" class="px-3 py-2.5 bg-error/10 text-error border border-error/20 rounded-sm font-label text-xs font-bold flex items-center gap-1"><span class="material-symbols-outlined" style="font-size:14px">delete</span>מחק</button>`:''}
-        <button onclick="closeModal()" class="flex-1 py-2.5 bg-surface-container-highest text-on-surface rounded-sm font-label text-xs font-bold">סגור</button>
-        <button onclick="window._openEditSoldier('${sid}')" class="flex-1 py-2.5 bg-primary text-on-primary rounded-sm font-label text-xs font-bold">עריכה</button>
-      </div>`);
+    const armHtml = armoryItems.length === 0 ? '' :
+      '<div class="mt-3"><h4 class="font-label text-[10px] tracking-widest border-b border-outline-variant/30 pb-2 mb-3" style="color:#6366f1">צל\"מים (' + armoryItems.length + ')</h4>' +
+      armoryItems.map(ai =>
+        '<div class="flex justify-between py-2 border-b border-outline-variant/10">' +
+          '<div class="flex items-center gap-2">' +
+            '<span class="text-xs px-2 py-0.5 rounded-full font-semibold" style="background:#6366f122;color:#6366f1">' + ai.catLabel + '</span>' +
+            '<span class="text-sm">' + ai.name + '</span>' +
+          '</div>' +
+          '<span class="text-[10px] text-on-surface-variant">' + ai.itemId + '</span>' +
+        '</div>'
+      ).join('') + '</div>';
+
+    const hasItems = soldierRegItems.length > 0 || armoryItems.length > 0;
+    const warningHtml = hasItems
+      ? '<div class="mt-4 p-3 bg-error/5 border border-error/20 rounded-sm flex items-center gap-2"><span class="material-symbols-outlined text-error" style="font-size:16px">warning</span><p class="text-xs text-error font-semibold">לא ניתן למחוק — יש לזכות את כל הציוד תחילה</p></div>'
+      : '';
+    const deleteBtn = hasItems ? '' :
+      '<button onclick="window._deleteSoldier(\'' + sid + '\')" class="px-3 py-2.5 bg-error/10 text-error border border-error/20 rounded-sm font-label text-xs font-bold flex items-center gap-1">' +
+        '<span class="material-symbols-outlined" style="font-size:14px">delete</span>מחק' +
+      '</button>';
+
+    const photoHtml = s.photo
+      ? '<img src="' + s.photo + '" class="w-full h-full object-cover"/>'
+      : '<span class="material-symbols-outlined text-primary text-3xl">person</span>';
+
+    showModal(s.name,
+      '<div>' +
+        '<div class="flex items-center gap-4 mb-4">' +
+          '<div class="w-14 h-14 bg-primary-container rounded-sm flex items-center justify-center border-2 border-primary/20 overflow-hidden">' + photoHtml + '</div>' +
+          '<div>' +
+            '<h3 class="font-headline text-xl font-extrabold">' + s.name + '</h3>' +
+            '<p class="text-primary font-label text-xs">מס׳ ' + s.id + '</p>' +
+            '<p class="text-on-surface-variant font-label text-[10px] mt-0.5">' + (s.phone||'') + ' | ' + (s.status||'') + '</p>' +
+          '</div>' +
+        '</div>' +
+        '<div>' +
+          '<h4 class="font-label text-[10px] text-primary tracking-widest border-b border-outline-variant/30 pb-2 mb-3">ציוד חתום (' + soldierRegItems.length + ')</h4>' +
+          itemsHtml +
+        '</div>' +
+        armHtml +
+        warningHtml +
+        '<div class="flex gap-2 mt-5">' +
+          deleteBtn +
+          '<button onclick="closeModal()" class="flex-1 py-2.5 bg-surface-container-highest text-on-surface rounded-sm font-label text-xs font-bold">סגור</button>' +
+          '<button onclick="window._openEditSoldier(\'' + sid + '\')" class="flex-1 py-2.5 bg-primary text-on-primary rounded-sm font-label text-xs font-bold">עריכה</button>' +
+        '</div>' +
+      '</div>'
+    );
   };
 
-
-  window._returnItemFromSoldier = async function(sid, sku, whKey, onDone) {
-    if (!confirm('לזכות פריט זה מהחייל?')) return;
-    try {
-      // Update inventory: issued-1, good+1
-      const invSnap = await get(ref(db,'inventory/'+whKey+'/'+sku));
-      if (invSnap.exists()) {
-        const item = invSnap.val();
-        await update(ref(db,'inventory/'+whKey+'/'+sku), {
-          good: (item.good||0)+1,
-          issued: Math.max(0,(item.issued||0)-1)
-        });
-      }
-      // Remove from soldier items
-      const solSnap = await get(ref(db,'soldiers/'+sid));
-      if (solSnap.exists()) {
-        const sol = solSnap.val();
-        const newItems = (sol.items||[]).filter(i => i !== sku);
-        await update(ref(db,'soldiers/'+sid), {items: newItems});
-      }
-      // Log
-      const invItem = (await get(ref(db,'inventory/'+whKey+'/'+sku))).val();
-      const solName = (await get(ref(db,'soldiers/'+sid+'/name'))).val()||'';
-      await _logActivity('זיכוי', invItem?.name||sku, sku, solName, 'תקין');
-      showToast('זיכוי בוצע ✓');
-      if (onDone) onDone();
-      // Refresh soldiers view
-      setTimeout(() => { if(activePage==='soldiers') renderSoldiers(); }, 300);
-    } catch(e) {
-      showToast('שגיאה: '+e.message, true);
-    }
-  };
   window._openAddSoldier = function() {
     showModal('הוספת חייל',`<div class="space-y-3">
         <div class="flex items-center gap-3">
@@ -1248,10 +1262,9 @@
       });
     }
 
-    let uid='soldier_'+Date.now();
-    if (email&&pass) {
+    let uid = null;
+    if (email && pass) {
       try {
-        // שימוש ב-Firebase Auth REST API — אמין יותר מ-secondary app
         const apiKey = 'AIzaSyD6fG2R9bjRq4PygvAwI3wgbQe2JViUzcQ';
         const res = await fetch(
           'https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=' + apiKey,
@@ -1263,14 +1276,17 @@
         );
         const data = await res.json();
         if (data.error) {
-          if (data.error.message === 'EMAIL_EXISTS') { showToast('אימייל כבר בשימוש — בחר אימייל אחר', true); return; }
-          showToast('שגיאה: ' + data.error.message, true); return;
+          if (data.error.message === 'EMAIL_EXISTS') { showToast('אימייל כבר בשימוש', true); return; }
+          if ((data.error.message||'').includes('WEAK_PASSWORD')) { showToast('סיסמה חלשה — לפחות 6 תווים', true); return; }
+          showToast('שגיאת Firebase: ' + data.error.message, true); return;
         }
+        if (!data.localId) { showToast('שגיאה: לא נוצר uid', true); return; }
         uid = data.localId;
       } catch(e) {
-        showToast('שגיאה ביצירת חשבון: ' + e.message, true); return;
+        showToast('שגיאה: ' + e.message, true); return;
       }
     }
+    if (!uid) uid = 'soldier_' + Date.now();
     const sid='s'+Date.now();
     await set(ref(db,'soldiers/'+sid),{name,id,phone,role,status:'כשיר',items:[],email:email||'',photo:photoBase64});
     await set(ref(db,'users/'+uid),{name,role,uid,soldierId:sid,id:id||'',email:email||'',phone:phone||''});
@@ -1284,53 +1300,60 @@
     const s = snap.val();
     const invSnap = await get(ref(db,'inventory'));
     const allInv = invSnap.val()||{};
-    const allItems={};
-    Object.entries(allInv).forEach(([wk,wv])=>Object.entries(wv||{}).forEach(([sku,item])=>{allItems[sku]={...item,warehouse:wk};}));
+    const allItems = {};
+    Object.entries(allInv).forEach(([wk,wv]) => Object.entries(wv||{}).forEach(([sku,item]) => { allItems[sku] = {...item, warehouse:wk}; }));
+
     const soldierItems = Array.isArray(s.items) ? s.items.filter(Boolean) : [];
-    const skuOptions=Object.entries(allItems).map(([sku,item])=>{
-      const sel=soldierItems.includes(sku)?'selected':'';
-      return `<option value="${sku}" ${sel}>${item.name} (${sku})</option>`;
+
+    const skuOptions = Object.entries(allItems).map(([sku,item]) => {
+      const sel = soldierItems.includes(sku) ? ' selected' : '';
+      return '<option value="' + sku + '"' + sel + '>' + item.name + ' (' + sku + ')</option>';
     }).join('');
 
-    showModal('עריכת חייל',`
-      <div class="flex gap-3 items-center p-3 bg-slate-50 rounded-xl border border-slate-200 mb-4">
-        <div id="editPhotoPreview" onclick="document.getElementById('s_photo_edit').click()" class="w-14 h-14 rounded-xl overflow-hidden bg-white border-2 border-dashed border-slate-300 flex items-center justify-center cursor-pointer shrink-0">
-          ${s.photo?`<img src="${s.photo}" class="w-full h-full object-cover"/>`:'<span class="material-symbols-outlined text-slate-300 text-2xl">person</span>'}
-        </div>
-        <input id="s_photo_edit" type="file" accept="image/*" class="hidden" onchange="window._previewPhoto('s_photo_edit','editPhotoPreview')"/>
-        <div><p class="text-sm font-semibold text-slate-600">תמונת פנים</p><button onclick="document.getElementById('s_photo_edit').click()" class="text-xs text-primary font-semibold">החלף</button></div>
-      </div>
-      <div class="space-y-3">
-        <div class="grid grid-cols-2 gap-2">
-          <div><label class="field-lbl">שם מלא</label><input id="s_name_e" class="field-inp" value="${s.name}" type="text"/></div>
-          <div><label class="field-lbl">מספר אישי</label><input id="s_id_e" class="field-inp" value="${s.id}" type="text"/></div>
-          <div><label class="field-lbl">טלפון</label><input id="s_phone_e" class="field-inp" value="${s.phone||''}" type="text"/></div>
-          <div><label class="field-lbl">תפקיד</label>
-            <select id="s_role_e" class="field-inp">
-              <option value="soldier" ${s.role==='soldier'?'selected':''}>חייל</option>
-              <option value="rasp" ${s.role==='rasp'?'selected':''}>רס"פ</option>
-            </select>
-          </div>
-          <div><label class="field-lbl">סטטוס</label>
-            <select id="s_status_e" class="field-inp">
-              ${['כשיר','חסר ציוד','מחלה','היעדרות'].map(st=>`<option ${s.status===st?'selected':''}>${st}</option>`).join('')}
-            </select>
-          </div>
-        </div>
-        <div>
-          <label class="field-lbl">ציוד חתום</label>
-          <select id="s_items_e" multiple class="field-inp text-sm" style="height:80px">${skuOptions}</select>
-        </div>
-        <div class="border-t border-slate-100 pt-3">
-          <p class="text-xs font-semibold text-slate-500 mb-2">פרטי התחברות</p>
-          <div class="space-y-2">
-            <div><label class="field-lbl">אימייל</label><input id="s_email_e" class="field-inp" value="${s.email||''}" type="email"/></div>
-            <div><label class="field-lbl">סיסמה חדשה</label><input id="s_pass_e" class="field-inp" type="password" placeholder="השאר ריק לאי-שינוי"/></div>
-          </div>
-        </div>
-      </div>`,
-    `<button onclick="closeModal()" class="btn-cancel">ביטול</button>
-     <button onclick="window._updateSoldier('${sid}')" class="btn-save">שמור</button>`);
+    const photoPreview = s.photo
+      ? '<img src="' + s.photo + '" class="w-full h-full object-cover"/>'
+      : '<span class="material-symbols-outlined text-slate-300 text-2xl">person</span>';
+
+    showModal('עריכת חייל',
+      '<div class="flex gap-3 items-center p-3 bg-slate-50 rounded-xl border border-slate-200 mb-4">' +
+        '<div id="editPhotoPreview" onclick="document.getElementById('s_photo_edit').click()" class="w-14 h-14 rounded-xl overflow-hidden bg-white border-2 border-dashed border-slate-300 flex items-center justify-center cursor-pointer shrink-0">' +
+          photoPreview +
+        '</div>' +
+        '<input id="s_photo_edit" type="file" accept="image/*" class="hidden" onchange="window._previewPhoto('s_photo_edit','editPhotoPreview')"/>' +
+        '<div><p class="text-sm font-semibold text-slate-600">תמונת פנים</p><button onclick="document.getElementById('s_photo_edit').click()" class="text-xs text-primary font-semibold">החלף</button></div>' +
+      '</div>' +
+      '<div class="space-y-3">' +
+        '<div class="grid grid-cols-2 gap-2">' +
+          '<div><label class="field-lbl">שם מלא</label><input id="s_name_e" class="field-inp" value="' + s.name + '" type="text"/></div>' +
+          '<div><label class="field-lbl">מספר אישי</label><input id="s_id_e" class="field-inp" value="' + s.id + '" type="text"/></div>' +
+          '<div><label class="field-lbl">טלפון</label><input id="s_phone_e" class="field-inp" value="' + (s.phone||'') + '" type="text"/></div>' +
+          '<div><label class="field-lbl">תפקיד</label>' +
+            '<select id="s_role_e" class="field-inp">' +
+              '<option value="soldier"' + (s.role==='soldier'?' selected':'') + '>חייל</option>' +
+              '<option value="rasp"' + (s.role==='rasp'?' selected':'') + '>רס"פ</option>' +
+            '</select>' +
+          '</div>' +
+          '<div><label class="field-lbl">סטטוס</label>' +
+            '<select id="s_status_e" class="field-inp">' +
+              ['כשיר','חסר ציוד','מחלה','היעדרות'].map(st => '<option' + (s.status===st?' selected':'') + '>' + st + '</option>').join('') +
+            '</select>' +
+          '</div>' +
+        '</div>' +
+        '<div>' +
+          '<label class="field-lbl">ציוד חתום</label>' +
+          '<select id="s_items_e" multiple class="field-inp text-sm" style="height:80px" size="4">' + skuOptions + '</select>' +
+        '</div>' +
+        '<div class="border-t border-slate-100 pt-3">' +
+          '<p class="text-xs font-semibold text-slate-500 mb-2">פרטי התחברות</p>' +
+          '<div class="space-y-2">' +
+            '<div><label class="field-lbl">אימייל</label><input id="s_email_e" class="field-inp" value="' + (s.email||'') + '" type="email"/></div>' +
+            '<div><label class="field-lbl">סיסמה חדשה</label><input id="s_pass_e" class="field-inp" type="password" placeholder="השאר ריק לאי-שינוי"/></div>' +
+          '</div>' +
+        '</div>' +
+      '</div>',
+      '<button onclick="closeModal()" class="btn-cancel">ביטול</button>' +
+      '<button onclick="window._updateSoldier(\'' + sid + '\')" class="btn-save">שמור</button>'
+    );
   };
 
   window._updateSoldier = async function(sid) {
