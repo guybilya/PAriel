@@ -75,6 +75,7 @@
         currentUser = { ...data, uid: user.uid };
         currentRole = data.role;
         currentSoldierId = (data.soldierId && data.soldierId !== "") ? data.soldierId : null;
+        window._isAdmin = (user.uid === '7IcKFSWfJJYTuGOoVkzHfPkUVCD3' || data.role === 'admin');
         activePage = (currentRole === 'soldier') ? 'my_gear' : 'warehouse_a';
         showApp();
         setTimeout(() => { updateNav(); loadCurrentPage(); }, 50);
@@ -401,7 +402,7 @@
         ${currentRole==='rasp'?`<td class="px-3 py-3">
           <div class="flex gap-2">
             <button onclick="window._openEditItem('${window._currentWarehouse}','${sku}')" class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors" style="font-size:20px">edit_note</button>
-            <button onclick="window._deleteItem('${window._currentWarehouse}','${sku}')" class="material-symbols-outlined text-on-surface-variant hover:text-error transition-colors" style="font-size:20px">delete</button>
+            ${window._isAdmin ? '<button onclick="window._deleteItem(\''+window._currentWarehouse+'\',\''+sku+'\' )" class="material-symbols-outlined text-on-surface-variant hover:text-error transition-colors" style="font-size:20px">delete</button>' : ''}
           </div>
         </td>`:''}
       </tr>`;
@@ -514,6 +515,27 @@
     const sku = document.getElementById('m_sku').value.trim();
     const name = document.getElementById('m_name').value.trim();
     if (!sku || !name) { showToast('נא למלא מק"ט ושם', true); return; }
+
+    // בדיקת כפילות מק"ט ותיאור בכל המחסנות
+    const allInvSnap = await get(ref(db, 'inventory'));
+    if (allInvSnap.exists()) {
+      const allInv = allInvSnap.val();
+      for (const [wk, wv] of Object.entries(allInv)) {
+        for (const [existSku, existItem] of Object.entries(wv || {})) {
+          if (existSku === sku) {
+            const whNames = {warehouse_a:'מחסן א׳', warehouse_b:'מחסן ב׳', warehouse_donations:'תרומות', warehouse_zivud:'זיווד'};
+            showToast('מק"ט "' + sku + '" כבר קיים ב' + (whNames[wk]||wk) + ' (פריט: ' + existItem.name + ')', true);
+            return;
+          }
+          if (existItem.name && existItem.name.trim().toLowerCase() === name.trim().toLowerCase()) {
+            const whNames = {warehouse_a:'מחסן א׳', warehouse_b:'מחסן ב׳', warehouse_donations:'תרומות', warehouse_zivud:'זיווד'};
+            showToast('תיאור "' + name + '" כבר קיים ב' + (whNames[wk]||wk) + ' (מק"ט: ' + existSku + ')', true);
+            return;
+          }
+        }
+      }
+    }
+
     let photo = '';
     const pi = document.getElementById('m_photo');
     if (pi?.files[0]) photo = await window._toBase64(pi.files[0]);
@@ -569,6 +591,7 @@
   };
 
   window._deleteItem = async function(whKey, sku) {
+    if (!window._isAdmin) { showToast('מחיקת פריטים מותרת לאדמין בלבד', true); return; }
     if (!confirm('למחוק פריט זה?')) return;
     const snap = await get(ref(db, 'inventory/'+whKey+'/'+sku));
     const name = snap.val()?.name || sku;
@@ -1183,7 +1206,7 @@
     const warningHtml = hasItems
       ? '<div class="mt-4 p-3 bg-error/5 border border-error/20 rounded-sm flex items-center gap-2"><span class="material-symbols-outlined text-error" style="font-size:16px">warning</span><p class="text-xs text-error font-semibold">לא ניתן למחוק — יש לזכות את כל הציוד תחילה</p></div>'
       : '';
-    const deleteBtn = hasItems ? '' :
+    const deleteBtn = (hasItems || !window._isAdmin) ? '' :
       '<button onclick="window._deleteSoldier(\'' + sid + '\')" class="px-3 py-2.5 bg-error/10 text-error border border-error/20 rounded-sm font-label text-xs font-bold flex items-center gap-1">' +
         '<span class="material-symbols-outlined" style="font-size:14px">delete</span>מחק' +
       '</button>';
@@ -1258,7 +1281,7 @@
         <input id="s_name" class="field-inp" placeholder="שם מלא" type="text"/>
         <input id="s_id" class="field-inp" placeholder="מספר אישי" type="text"/>
         <input id="s_phone" class="field-inp" placeholder="טלפון" type="text"/>
-        <select id="s_role" class="field-inp"><option value="soldier">חייל</option><option value="rasp">רס"פ</option></select>
+        <select id="s_role" class="field-inp"><option value="soldier">חייל</option>${window._isAdmin ? '<option value=\"rasp\">רס"פ</option>' : ''}</select>
         <input id="s_email" class="field-inp" placeholder="אימייל" type="email"/>
         <input id="s_pass" class="field-inp" placeholder="סיסמה" type="password"/>
       </div>`,
@@ -1285,6 +1308,7 @@
     const email = document.getElementById('s_email').value.trim();
     const pass = document.getElementById('s_pass').value;
     if (!name||!id) { showToast('נא למלא שם ומספר אישי', true); return; }
+    if (role === 'rasp' && !window._isAdmin) { showToast('רק אדמין יכול לפתוח רס"פ', true); return; }
 
     let photoBase64='';
     const photoInput = document.getElementById('s_photo');
@@ -1439,6 +1463,7 @@
 
   // ── מחיקת חייל — רק אם אין ציוד ──
   window._deleteSoldier = async function(sid) {
+    if (!window._isAdmin) { showToast('פעולה זו מותרת לאדמין בלבד', true); return; }
     const snap=await get(ref(db,'soldiers/'+sid));
     const s=snap.val();
     if (s?.items?.length>0) { showToast('לא ניתן — יש לזכות '+s.items.length+' פריטים תחילה', true); return; }
@@ -1512,7 +1537,7 @@
         ${isRasp?`<div class="px-3 pb-3 pt-2 flex gap-2">
           ${!isDone?`<button onclick="window._doneRequest('${rid}')" class="flex-1 bg-surface-container-highest border border-outline-variant/30 hover:bg-primary/10 hover:text-primary text-on-surface-variant font-label text-[10px] font-bold py-2 rounded-sm flex items-center justify-center gap-1"><span class="material-symbols-outlined" style="font-size:14px">check_circle</span> טופל</button>`:''}
           <button onclick="window._replyRequest('${rid}')" class="flex-1 bg-surface-container-highest border border-outline-variant/30 hover:bg-primary/10 hover:text-primary text-on-surface-variant font-label text-[10px] font-bold py-2 rounded-sm flex items-center justify-center gap-1"><span class="material-symbols-outlined" style="font-size:14px">reply</span> הגב</button>
-          <button onclick="window._deleteRequest('${rid}')" class="bg-surface-container-highest border border-outline-variant/30 hover:bg-red-50 hover:text-red-500 text-on-surface-variant font-label text-[10px] py-2 px-3 rounded-sm flex items-center justify-center"><span class="material-symbols-outlined" style="font-size:14px">delete</span></button>
+          ${window._isAdmin ? `<button onclick="window._deleteRequest('${rid}')" class="bg-surface-container-highest border border-outline-variant/30 hover:bg-red-50 hover:text-red-500 text-on-surface-variant font-label text-[10px] py-2 px-3 rounded-sm flex items-center justify-center"><span class="material-symbols-outlined" style="font-size:14px">delete</span></button>` : ''}
         </div>`:''}
       </div>`;
     }).join('');
@@ -1559,6 +1584,7 @@
   };
 
   window._deleteRequest=async function(rid){
+    if (!window._isAdmin) { showToast('מחיקת בקשות מותרת לאדמין בלבד', true); return; }
     if(!confirm('למחוק בקשה זו?'))return;
     await remove(ref(db,'requests/'+rid));
     showToast('נמחקה ✓');
@@ -2012,6 +2038,7 @@
 
 
   window._resetAllData=function(){
+    if (!window._isAdmin) { showToast('פעולה זו מותרת לאדמין בלבד', true); return; }
     showModal('איפוס מסד נתונים',`<div class="space-y-4">
       <div class="flex items-center gap-3 p-3 bg-red-50 rounded-xl border border-red-200">
         <span class="material-symbols-outlined text-red-500 text-2xl shrink-0">warning</span>
