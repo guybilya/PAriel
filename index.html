@@ -1154,12 +1154,13 @@
           let whKey = 'warehouse_a';
           Object.entries(invData).forEach(([wk,wv]) => { if (wv&&wv[sku]) whKey=wk; });
           const itemName = item ? item.name : sku;
+          const btnOnclick = "window._returnItemFromSoldier('" + sid + "','" + sku + "','" + whKey + "')";
           return '<div class="flex justify-between items-center py-2 border-b border-outline-variant/10">' +
             '<div class="flex-1 min-w-0">' +
               '<span class="text-sm font-medium block">' + itemName + '</span>' +
               '<span class="text-[10px] font-label text-on-surface-variant">' + sku + '</span>' +
             '</div>' +
-            '<button onclick="window._returnItemFromSoldier(\'' + sid + '\',\'' + sku + '\',\'' + whKey + '\')" ' +
+            '<button onclick="' + btnOnclick + '" ' +
               'class="mr-2 px-2 py-1 bg-error/10 text-error border border-error/20 rounded-sm font-label text-[10px] font-bold hover:bg-error/20 shrink-0">' +
               'זיכוי' +
             '</button>' +
@@ -1214,6 +1215,33 @@
         '</div>' +
       '</div>'
     );
+  };
+
+  window._returnItemFromSoldier = async function(sid, sku, whKey) {
+    try {
+      const invSnap = await get(ref(db,'inventory/'+whKey+'/'+sku));
+      if (invSnap.exists()) {
+        const item = invSnap.val();
+        await update(ref(db,'inventory/'+whKey+'/'+sku), {
+          good: (item.good||0)+1,
+          issued: Math.max(0,(item.issued||0)-1)
+        });
+      }
+      const solSnap = await get(ref(db,'soldiers/'+sid));
+      if (solSnap.exists()) {
+        const sol = solSnap.val();
+        const newItems = (sol.items||[]).filter(i => i !== sku);
+        await update(ref(db,'soldiers/'+sid), {items: newItems});
+      }
+      const invItem = (await get(ref(db,'inventory/'+whKey+'/'+sku))).val();
+      const solName = (await get(ref(db,'soldiers/'+sid+'/name'))).val()||'';
+      await _logActivity('זיכוי', invItem?.name||sku, sku, solName, 'תקין');
+      showToast('זיכוי בוצע ✓');
+      closeModal();
+      setTimeout(() => { if(activePage==='soldiers') renderSoldiers(); }, 300);
+    } catch(e) {
+      showToast('שגיאה: '+e.message, true);
+    }
   };
 
   window._openAddSoldier = function() {
