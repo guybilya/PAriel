@@ -52,7 +52,24 @@
   onAuthStateChanged(auth, async (user) => {
     if (user) {
       dbg('טוען נתונים...');
-      const snap = await get(ref(db, 'users/' + user.uid));
+      let snap = await get(ref(db, 'users/' + user.uid));
+      // אם אין users entry — נחפש ב-soldiers לפי email וניצור אוטומטית
+      if (!snap.exists()) {
+        const solSnap = await get(ref(db, 'soldiers'));
+        if (solSnap.exists()) {
+          const soldiers = solSnap.val();
+          const entry = Object.entries(soldiers).find(([,s]) => s.email === user.email);
+          if (entry) {
+            const [sid, soldier] = entry;
+            await set(ref(db, 'users/' + user.uid), {
+              name: soldier.name, role: soldier.role||'soldier',
+              uid: user.uid, soldierId: sid,
+              id: soldier.id||'', email: soldier.email||'', phone: soldier.phone||''
+            });
+            snap = await get(ref(db, 'users/' + user.uid));
+          }
+        }
+      }
       if (snap.exists()) {
         const data = snap.val();
         currentUser = { ...data, uid: user.uid };
